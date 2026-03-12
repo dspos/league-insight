@@ -51,7 +51,7 @@ public class UserTagService {
      * 根据 PUUID 获取用户标签
      */
     public UserTag getUserTagByPuuid(String puuid, Integer mode) {
-        log.info("计算用户标签: puuid={}, mode={}", puuid, mode);
+        log.debug("计算用户标签: puuid={}, mode={}", puuid, mode);
 
         try {
             // 获取战绩
@@ -63,9 +63,13 @@ public class UserTagService {
 
             // 获取对局详情
             List<MatchHistory> enrichedHistory = enrichMatchHistory(matchHistory);
+            log.debug("enrichMatchHistory 完成, 有效对局数: {}", enrichedHistory.stream()
+                    .filter(g -> g.getParticipants() != null && !g.getParticipants().isEmpty())
+                    .count());
 
             // 计算标签
             List<RankTag> tags = evaluateTags(enrichedHistory, puuid, mode);
+            log.debug("evaluateTags 结果: {} 个标签", tags.size());
 
             // 计算近期数据
             RecentData recentData = calculateRecentData(enrichedHistory, puuid, mode);
@@ -95,7 +99,10 @@ public class UserTagService {
         // 为每场对局获取详情，以便获取所有 10 个玩家的信息
         for (MatchHistory game : matchHistory) {
             try {
-                GameDetail detail = lcuService.getGameDetailById(game.getGameId());
+                // 使用缓存获取对局详情
+                GameDetail detail = gameDetailCache.get(game.getGameId(),
+                        lcuService::getGameDetailById);
+
                 if (detail != null && detail.getParticipants() != null) {
                     // 将 GameDetail 中的参与者信息转换到 MatchHistory
                     List<MatchHistory.Participant> allParticipants = new ArrayList<>();

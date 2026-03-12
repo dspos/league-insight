@@ -9,10 +9,6 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
 import lombok.extern.slf4j.Slf4j;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -59,7 +55,7 @@ public class ProcessUtils {
             Kernel32.INSTANCE.CloseHandle(snapshot);
         }
 
-        log.info("找到 {} 个 LCU 进程", pids.size());
+        log.debug("找到 {} 个 LCU 进程", pids.size());
         return pids;
     }
 
@@ -157,7 +153,7 @@ public class ProcessUtils {
             AuthInfo authInfo = new AuthInfo();
             authInfo.setToken(token);
             authInfo.setPort(port);
-            log.info("成功提取 LCU 认证信息: port={}", port);
+            log.debug("成功提取 LCU 认证信息: port={}", port);
             return authInfo;
         }
 
@@ -169,13 +165,7 @@ public class ProcessUtils {
      * 获取 LCU 认证信息（主入口）
      */
     public static AuthInfo getLcuAuthInfo() {
-        // 优先尝试从 lockfile 读取
-        AuthInfo authInfo = readLockfile();
-        if (authInfo != null) {
-            return authInfo;
-        }
-
-        // 备用方案：从进程命令行读取
+        // 从进程命令行读取
         List<Integer> pids = findLcuProcesses();
 
         if (pids.isEmpty()) {
@@ -184,9 +174,9 @@ public class ProcessUtils {
         }
 
         for (Integer pid : pids) {
-            log.info("尝试读取进程 PID={}", pid);
+            log.debug("尝试读取进程 PID={}", pid);
             String commandLine = getProcessCommandLine(pid);
-            authInfo = extractAuthInfo(commandLine);
+            AuthInfo authInfo = extractAuthInfo(commandLine);
             if (authInfo != null) {
                 authInfo.setPid(pid);
                 return authInfo;
@@ -194,50 +184,6 @@ public class ProcessUtils {
         }
 
         log.error("无法从任何 LCU 进程获取认证信息");
-        return null;
-    }
-
-    /**
-     * 从 lockfile 读取认证信息
-     * lockfile 格式: LeagueClient:pid:port:token:https
-     */
-    private static AuthInfo readLockfile() {
-        String[] possiblePaths = {
-                // WeGame 版本 - LeagueClient 目录
-                "C:\\WeGameApps\\英雄联盟\\LeagueClient\\lockfile",
-                // WeGame 版本 - Riot Client 目录
-                "C:\\WeGameApps\\英雄联盟\\Riot Client Data\\User Data\\Config\\lockfile",
-                // 国际版常见路径
-                System.getenv("LOCALAPPDATA") + "\\Riot Games\\League of Legends\\lockfile",
-                "C:\\Riot Games\\League of Legends\\lockfile",
-                "D:\\Riot Games\\League of Legends\\lockfile",
-                "D:\\Game\\League of Legends\\lockfile"
-        };
-
-        for (String pathStr : possiblePaths) {
-            Path lockfilePath = Paths.get(pathStr);
-            if (Files.exists(lockfilePath)) {
-                try {
-                    String content = Files.readString(lockfilePath, StandardCharsets.UTF_8);
-                    log.debug("读取 lockfile: {}", pathStr);
-
-                    // 格式: ProcessName:pid:port:token:protocol
-                    String[] parts = content.split(":");
-                    if (parts.length >= 5 && parts[0].startsWith("LeagueClient")) {
-                        AuthInfo authInfo = new AuthInfo();
-                        authInfo.setPid(Integer.parseInt(parts[1]));
-                        authInfo.setPort(parts[2]);
-                        authInfo.setToken(parts[3]);
-                        log.info("从 lockfile 成功提取认证信息: port={}", parts[2]);
-                        return authInfo;
-                    }
-                } catch (Exception e) {
-                    log.warn("读取 lockfile 失败 {}: {}", pathStr, e.getMessage());
-                }
-            }
-        }
-
-        log.debug("未找到 LeagueClient lockfile");
         return null;
     }
 }

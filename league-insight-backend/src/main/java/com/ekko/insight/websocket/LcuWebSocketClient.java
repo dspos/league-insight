@@ -61,10 +61,23 @@ public class LcuWebSocketClient {
         }
 
         this.authInfo = authInfo;
-        this.running = true;
 
-        // 关闭旧连接
-        disconnect();
+        // 关闭旧连接（不修改 running 状态）
+        if (webSocketClient != null) {
+            try {
+                webSocketClient.close();
+            } catch (Exception e) {
+                log.debug("关闭旧 WebSocket 时出错: {}", e.getMessage());
+            }
+            webSocketClient = null;
+        }
+
+        if (reconnectThread != null) {
+            reconnectThread.interrupt();
+            reconnectThread = null;
+        }
+
+        this.running = true;
 
         // 启动连接线程
         reconnectThread = new Thread(() -> {
@@ -253,6 +266,6 @@ public class LcuWebSocketClient {
      * 是否已连接
      */
     public boolean isConnected() {
-        return webSocketClient != null && webSocketClient.isOpen();
+        return running && webSocketClient != null && webSocketClient.isOpen();
     }
 }

@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,6 +53,12 @@ public class LcuService {
     private final Cache<String, Rank> rankCache = Caffeine.newBuilder()
             .maximumSize(500)
             .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build();
+
+    // 战绩缓存：存储完整的 50 条数据，key 为 puuid
+    private final Cache<String, MatchHistory[]> matchHistoryCache = Caffeine.newBuilder()
+            .maximumSize(200)
+            .expireAfterWrite(2, TimeUnit.MINUTES)
             .build();
 
     private volatile String currentPhase;
@@ -242,7 +249,28 @@ public class LcuService {
      * 2. 在内存中根据 begIndex 和 endIndex 进行切片
      */
     public List<MatchHistory> getMatchHistory(String puuid, int begIndex, int endIndex) {
-        // 总是获取 0-49 的数据，然后在内存中切片
+        // 从缓存获取完整的 50 条数据
+        MatchHistory[] matches = matchHistoryCache.get(puuid, this::fetchMatchHistory);
+
+        if (matches == null || matches.length == 0) {
+            return List.of();
+        }
+
+        // 在内存中进行切片
+        int beg = Math.max(0, begIndex);
+        int end = Math.min(endIndex + 1, matches.length); // endIndex 是 inclusive 的
+
+        if (beg >= end) {
+            return List.of();
+        }
+
+        return Arrays.asList(Arrays.copyOfRange(matches, beg, end));
+    }
+
+    /**
+     * 从 LCU API 获取战绩数据
+     */
+    private MatchHistory[] fetchMatchHistory(String puuid) {
         String uri = String.format("lol-match-history/v1/products/lol/%s/matches?begIndex=%d&endIndex=%d",
                 puuid, 0, 49);
 
@@ -253,25 +281,11 @@ public class LcuService {
             JsonNode gamesWrapper = response.get("games");
             if (gamesWrapper != null && gamesWrapper.has("games")) {
                 JsonNode games = gamesWrapper.get("games");
-                MatchHistory[] matches = lcuHttpClient.getObjectMapper().convertValue(games, MatchHistory[].class);
-
-                if (matches == null || matches.length == 0) {
-                    return List.of();
-                }
-
-                // 在内存中进行切片
-                int beg = Math.max(0, begIndex);
-                int end = Math.min(endIndex + 1, matches.length); // endIndex 是 inclusive 的
-
-                if (beg >= end) {
-                    return List.of();
-                }
-
-                return Arrays.asList(Arrays.copyOfRange(matches, beg, end));
+                return lcuHttpClient.getObjectMapper().convertValue(games, MatchHistory[].class);
             }
         }
 
-        return List.of();
+        return new MatchHistory[0];
     }
 
     /**
@@ -286,23 +300,8 @@ public class LcuService {
      */
     public List<MatchHistory> getFilteredMatchHistory(String puuid, int begIndex, int endIndex,
                                                        Integer queueId, Integer championId, int maxResults) {
-        // 先获取全部 0-49 的数据
-        String uri = String.format("lol-match-history/v1/products/lol/%s/matches?begIndex=%d&endIndex=%d",
-                puuid, 0, 49);
-
-        JsonNode response = lcuHttpClient.get(uri, JsonNode.class);
-
-        if (response == null || !response.has("games")) {
-            return List.of();
-        }
-
-        JsonNode gamesWrapper = response.get("games");
-        if (gamesWrapper == null || !gamesWrapper.has("games")) {
-            return List.of();
-        }
-
-        JsonNode games = gamesWrapper.get("games");
-        MatchHistory[] allMatches = lcuHttpClient.getObjectMapper().convertValue(games, MatchHistory[].class);
+        // 从缓存获取数据
+        MatchHistory[] allMatches = matchHistoryCache.get(puuid, key -> fetchMatchHistory(key));
 
         if (allMatches == null || allMatches.length == 0) {
             return List.of();
@@ -655,60 +654,81 @@ public class LcuService {
     }
 
     /**
-     * 处理队伍数据
+     * 处理队伍数据（并行优化版本）
      */
     private List<SessionSummoner> processTeam(List<GameSession.OnePlayer> team, Integer queueId) {
         if (team == null) return List.of();
 
-        return team.stream()
-                .map(player -> {
-                    if (player.getPuuid() == null || player.getPuuid().isEmpty()) {
-                        return SessionSummoner.builder()
-                                .championId(player.getChampionId())
-                                .championKey("champion_" + player.getChampionId())
-                                .summoner(new Summoner())
-                                .matchHistory(List.of())
-                                .userTag(UserTag.builder().build())
-                                .rank(new Rank())
-                                .meetGames(List.of())
-                                .preGroupMarkers(PreGroupMarker.empty())
-                                .isLoading(false)
-                                .build();
-                    }
-
-                    try {
-                        Summoner summoner = getSummonerByPuuid(player.getPuuid());
-                        Rank rank = getRankByPuuid(player.getPuuid());
-                        List<MatchHistory> history = getMatchHistory(player.getPuuid(), 0, 3);
-                        UserTag userTag = userTagService.getUserTagByPuuid(player.getPuuid(), queueId);
-
-                        return SessionSummoner.builder()
-                                .championId(player.getChampionId())
-                                .championKey("champion_" + player.getChampionId())
-                                .summoner(summoner != null ? summoner : new Summoner())
-                                .matchHistory(history != null ? history : List.of())
-                                .userTag(userTag != null ? userTag : UserTag.builder().build())
-                                .rank(rank != null ? rank : new Rank())
-                                .meetGames(List.of())
-                                .preGroupMarkers(PreGroupMarker.empty())
-                                .isLoading(false)
-                                .build();
-                    } catch (Exception e) {
-                        log.warn("获取玩家信息失败: {}", player.getPuuid(), e);
-                        return SessionSummoner.builder()
-                                .championId(player.getChampionId())
-                                .championKey("champion_" + player.getChampionId())
-                                .summoner(new Summoner())
-                                .matchHistory(List.of())
-                                .userTag(UserTag.builder().build())
-                                .rank(new Rank())
-                                .meetGames(List.of())
-                                .preGroupMarkers(PreGroupMarker.empty())
-                                .isLoading(false)
-                                .build();
-                    }
-                })
+        // 并行处理每个玩家
+        List<CompletableFuture<SessionSummoner>> futures = team.stream()
+                .map(player -> CompletableFuture.supplyAsync(() -> processPlayer(player, queueId)))
                 .toList();
+
+        // 等待所有任务完成并收集结果
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .toList();
+    }
+
+    /**
+     * 处理单个玩家数据（并行获取多个 API）
+     */
+    private SessionSummoner processPlayer(GameSession.OnePlayer player, Integer queueId) {
+        if (player.getPuuid() == null || player.getPuuid().isEmpty()) {
+            return buildEmptySessionSummoner(player.getChampionId());
+        }
+
+        try {
+            // 并行获取 4 个 API 数据
+            CompletableFuture<Summoner> summonerFuture = CompletableFuture.supplyAsync(
+                    () -> getSummonerByPuuid(player.getPuuid()));
+            CompletableFuture<Rank> rankFuture = CompletableFuture.supplyAsync(
+                    () -> getRankByPuuid(player.getPuuid()));
+            CompletableFuture<List<MatchHistory>> historyFuture = CompletableFuture.supplyAsync(
+                    () -> getMatchHistory(player.getPuuid(), 0, 3));
+            CompletableFuture<UserTag> userTagFuture = CompletableFuture.supplyAsync(
+                    () -> userTagService.getUserTagByPuuid(player.getPuuid(), queueId));
+
+            // 等待所有请求完成
+            CompletableFuture.allOf(summonerFuture, rankFuture, historyFuture, userTagFuture).join();
+
+            Summoner summoner = summonerFuture.join();
+            Rank rank = rankFuture.join();
+            List<MatchHistory> history = historyFuture.join();
+            UserTag userTag = userTagFuture.join();
+
+            return SessionSummoner.builder()
+                    .championId(player.getChampionId())
+                    .championKey("champion_" + player.getChampionId())
+                    .summoner(summoner != null ? summoner : new Summoner())
+                    .matchHistory(history != null ? history : List.of())
+                    .userTag(userTag != null ? userTag : UserTag.builder().build())
+                    .rank(rank != null ? rank : new Rank())
+                    .meetGames(List.of())
+                    .preGroupMarkers(PreGroupMarker.empty())
+                    .isLoading(false)
+                    .build();
+        } catch (Exception e) {
+            log.warn("获取玩家信息失败: {}", player.getPuuid(), e);
+            return buildEmptySessionSummoner(player.getChampionId());
+        }
+    }
+
+    /**
+     * 构建空的 SessionSummoner
+     */
+    private SessionSummoner buildEmptySessionSummoner(Integer championId) {
+        return SessionSummoner.builder()
+                .championId(championId)
+                .championKey("champion_" + championId)
+                .summoner(new Summoner())
+                .matchHistory(List.of())
+                .userTag(UserTag.builder().build())
+                .rank(new Rank())
+                .meetGames(List.of())
+                .preGroupMarkers(PreGroupMarker.empty())
+                .isLoading(false)
+                .build();
     }
 
     /**
@@ -891,5 +911,6 @@ public class LcuService {
     public void refreshCache(String puuid) {
         summonerCache.invalidate(puuid);
         rankCache.invalidate(puuid);
+        matchHistoryCache.invalidate(puuid);
     }
 }

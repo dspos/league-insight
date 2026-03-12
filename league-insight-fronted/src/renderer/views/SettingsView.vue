@@ -16,8 +16,14 @@ async function clearCache() {
   if (!confirm('确定要清除所有缓存吗？')) return
 
   try {
+    // 保存当前主题
+    const currentTheme = themeStore.theme
+
     // 清除 localStorage
     localStorage.clear()
+
+    // 恢复主题设置
+    themeStore.setTheme(currentTheme)
 
     // 调用后端刷新缓存
     await apiClient.getConfig()

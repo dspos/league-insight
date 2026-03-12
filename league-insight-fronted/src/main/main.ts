@@ -56,7 +56,7 @@ function createWindow() {
 }
 
 /**
- * 启动后端服务 (Native Image)
+ * 启动后端服务 (jpackage 打包，带 JVM)
  */
 async function startBackend(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -67,7 +67,13 @@ async function startBackend(): Promise<void> {
       return
     }
 
-    const exePath = join(process.resourcesPath, 'backend', 'league-insight-backend.exe')
+    // 优先使用 jpackage 打包的后端（带 JVM）
+    const jpackageExePath = join(process.resourcesPath, 'backend', 'league-insight', 'league-insight.exe')
+    // 备用：Native Image（如果 jpackage 不存在）
+    const nativeExePath = join(process.resourcesPath, 'backend', 'league-insight-backend.exe')
+
+    const fs = require('fs')
+    const exePath = fs.existsSync(jpackageExePath) ? jpackageExePath : nativeExePath
 
     console.log('Starting backend from:', exePath)
 

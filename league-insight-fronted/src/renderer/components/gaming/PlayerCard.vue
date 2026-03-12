@@ -21,6 +21,14 @@
         <div class="avatar-wrapper">
           <img :src="getChampionUrl(sessionSummoner.championId)" class="champion-img" alt="" />
           <span class="level-badge">{{ sessionSummoner.summoner?.summonerLevel || '?' }}</span>
+          <!-- 预组队徽章 - 放在头像右下角 -->
+          <span
+            v-if="sessionSummoner.preGroupMarkers?.name"
+            class="pre-group-badge"
+            :class="sessionSummoner.preGroupMarkers.type"
+          >
+            {{ sessionSummoner.preGroupMarkers.name }}
+          </span>
         </div>
 
         <div class="player-info">
@@ -32,67 +40,52 @@
             <img :src="tierImgUrl" class="tier-icon" alt="" />
             <span class="tier-text">{{ tierCn }}</span>
           </div>
-        </div>
-      </div>
-
-      <!-- 中间：近期战绩 -->
-      <div class="player-history">
-        <div
-          v-for="(game, idx) in recentMatches"
-          :key="idx"
-          class="history-item"
-          :class="{ win: isWin(game) }"
-        >
-          <span class="win-status" :class="{ win: isWin(game) }">{{ isWin(game) ? '胜' : '负' }}</span>
-          <img :src="getChampionUrl(game.championId)" class="history-champ" alt="" />
-          <span class="history-kda">{{ game.stats?.kills || 0 }}/{{ game.stats?.deaths || 0 }}/{{ game.stats?.assists || 0 }}</span>
-        </div>
-      </div>
-
-      <!-- 右侧：标签和数据 -->
-      <div class="player-right">
-        <!-- 预组队标记 -->
-        <div class="tags-row">
-          <span
-            v-if="sessionSummoner.preGroupMarkers?.name"
-            class="pre-group-tag"
-            :class="sessionSummoner.preGroupMarkers.type"
-          >
-            {{ sessionSummoner.preGroupMarkers.name }}
-          </span>
-
-          <!-- 遇到过 -->
-          <span v-if="sessionSummoner.meetGames?.length" class="meet-tag">
-            遇见过
-          </span>
-
           <!-- 用户标签 -->
-          <span
-            v-for="tag in sessionSummoner.userTag?.tag || []"
-            :key="tag.tagName"
-            class="user-tag"
-            :class="tag.good ? 'good' : 'bad'"
-            :title="tag.tagDesc"
-          >
-            {{ tag.tagName }}
+          <div v-if="userTags.length" class="user-tags-row">
+            <span
+              v-for="tag in userTags.slice(0, 2)"
+              :key="tag.tagName"
+              class="user-tag"
+              :class="tag.good ? 'good' : 'bad'"
+              :title="tag.tagDesc"
+            >
+              {{ tag.tagName }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中间：核心数据 -->
+      <div class="player-stats">
+        <!-- 最近战绩结果图标 -->
+        <div class="recent-result">
+          <span class="result-icon" :class="lastGameWin ? 'win' : 'lose'">
+            {{ lastGameWin ? '✓' : '✗' }}
           </span>
+          <span class="result-label">{{ lastGameWin ? '胜' : '负' }}</span>
         </div>
 
-        <!-- 近期数据 -->
-        <div class="recent-stats">
-          <div class="stat-row">
-            <span class="stat-label">KDA</span>
-            <span class="stat-value" :style="{ color: getKdaColor(sessionSummoner.userTag?.recentData?.kda) }">
-              {{ sessionSummoner.userTag?.recentData?.kda?.toFixed(1) || '0.0' }}
-            </span>
-          </div>
-          <div class="stat-row">
-            <span class="stat-label">胜率</span>
-            <span class="stat-value" :style="{ color: getWinRateColor(calcWinRate) }">
-              {{ calcWinRate }}%
-            </span>
-          </div>
+        <!-- KDA -->
+        <div class="stat-item">
+          <span class="stat-value kda" :style="{ color: kdaColor }">
+            {{ kdaValue }}
+          </span>
+          <span class="stat-label">KDA</span>
         </div>
+
+        <!-- 胜率带趋势箭头 -->
+        <div class="stat-item">
+          <span class="stat-value winrate" :style="{ color: winRateColor }">
+            <span class="trend-arrow" :class="winRateTrend">{{ winRateTrend === 'up' ? '↑' : '↓' }}</span>
+            {{ calcWinRate }}%
+          </span>
+          <span class="stat-label">胜率</span>
+        </div>
+      </div>
+
+      <!-- 右侧：遇见过提示 -->
+      <div v-if="sessionSummoner.meetGames?.length" class="meet-indicator">
+        <span class="meet-icon" :title="`曾经遇见过 ${sessionSummoner.meetGames.length} 次`">⚠</span>
       </div>
     </div>
 
@@ -128,9 +121,55 @@ const isHiddenRecord = computed(() => {
     (!props.sessionSummoner.summoner?.gameName || !props.sessionSummoner.summoner?.puuid)
 })
 
-// 近期战绩（取前4场）
-const recentMatches = computed(() => {
-  return (props.sessionSummoner.matchHistory || []).slice(0, 4)
+// 用户标签
+const userTags = computed(() => {
+  return props.sessionSummoner.userTag?.tag || []
+})
+
+// 最近一场是否获胜
+const lastGameWin = computed(() => {
+  const matches = props.sessionSummoner.matchHistory || []
+  if (matches.length === 0) return true
+  return matches[0].participants?.[0]?.stats?.win || false
+})
+
+// KDA 值
+const kdaValue = computed(() => {
+  const kda = props.sessionSummoner.userTag?.recentData?.kda
+  if (!kda) return '0.0'
+  return kda.toFixed(1)
+})
+
+// KDA 颜色
+const kdaColor = computed(() => {
+  const kda = props.sessionSummoner.userTag?.recentData?.kda
+  if (!kda) return 'var(--text-primary)'
+  if (kda >= 5) return '#f2bf63'
+  if (kda >= 3) return '#3d9b7a'
+  if (kda >= 1) return 'var(--text-primary)'
+  return '#c45c5c'
+})
+
+// 计算胜率
+const calcWinRate = computed(() => {
+  const wins = props.sessionSummoner.userTag?.recentData?.selectWins || 0
+  const losses = props.sessionSummoner.userTag?.recentData?.selectLosses || 0
+  const total = wins + losses
+  if (total === 0) return 50
+  return Math.round((wins / total) * 100)
+})
+
+// 胜率颜色
+const winRateColor = computed(() => {
+  const rate = calcWinRate.value
+  if (rate >= 60) return '#3d9b7a'
+  if (rate >= 50) return 'var(--text-primary)'
+  return '#c45c5c'
+})
+
+// 胜率趋势
+const winRateTrend = computed(() => {
+  return calcWinRate.value >= 50 ? 'up' : 'down'
 })
 
 // 段位信息
@@ -146,20 +185,6 @@ const tierCn = computed(() => {
   return getTierCn(rank.tier) + (rank.division ? ' ' + rank.division : '')
 })
 
-// 计算胜率
-const calcWinRate = computed(() => {
-  const wins = props.sessionSummoner.userTag?.recentData?.selectWins || 0
-  const losses = props.sessionSummoner.userTag?.recentData?.selectLosses || 0
-  const total = wins + losses
-  if (total === 0) return 0
-  return Math.round((wins / total) * 100)
-})
-
-// 是否获胜
-function isWin(game: MatchHistory): boolean {
-  return game.participants?.[0]?.stats?.win || false
-}
-
 // 点击名字
 function onNameClick() {
   const name = props.sessionSummoner.summoner?.gameName
@@ -167,21 +192,6 @@ function onNameClick() {
   if (name && tag) {
     emit('navigateToPlayer', name, tag)
   }
-}
-
-// 颜色函数
-function getKdaColor(kda: number | undefined): string {
-  if (!kda) return 'var(--text-primary)'
-  if (kda >= 5) return '#f2bf63'
-  if (kda >= 3) return '#63d8b4'
-  if (kda >= 1) return 'var(--text-primary)'
-  return '#c45c5c'
-}
-
-function getWinRateColor(rate: number): string {
-  if (rate >= 60) return '#63d8b4'
-  if (rate >= 50) return 'var(--text-primary)'
-  return '#c45c5c'
 }
 
 // URL 函数
@@ -229,19 +239,28 @@ function getTierCn(tier: string): string {
 <style scoped>
 .player-card {
   background: var(--bg-secondary);
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
-  padding: 12px;
-  min-height: 120px;
+  padding: 12px 14px;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
+  transition: all 0.2s;
 }
 
+.player-card:hover {
+  border-color: var(--border-color-hover, rgba(255,255,255,0.1));
+}
+
+/* 蓝方样式 */
 .player-card.team-blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), var(--bg-secondary));
   border-left: 3px solid rgba(59, 130, 246, 0.6);
 }
 
+/* 红方样式 */
 .player-card.team-red {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), var(--bg-secondary));
   border-left: 3px solid rgba(239, 68, 68, 0.6);
 }
 
@@ -298,7 +317,8 @@ function getTierCn(tier: string): string {
 /* 正常内容 */
 .player-content {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
   flex: 1;
 }
 
@@ -310,46 +330,86 @@ function getTierCn(tier: string): string {
 
 .avatar-wrapper {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
 }
 
 .champion-img {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
+  border-radius: 10px;
   object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.1);
 }
 
 .level-badge {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
-  font-size: 10px;
-  background: rgba(0, 0, 0, 0.8);
-  padding: 0 4px;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 1px 6px;
   border-radius: 4px;
+  color: white;
+  font-weight: 600;
+}
+
+/* 预组队徽章 - 头像右下角 */
+.pre-group-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 8px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pre-group-badge.success {
+  background: rgba(61, 155, 122, 0.9);
+  color: white;
+}
+
+.pre-group-badge.warning {
+  background: rgba(242, 191, 99, 0.9);
+  color: #1a1a2e;
+}
+
+.pre-group-badge.error {
+  background: rgba(196, 92, 92, 0.9);
+  color: white;
+}
+
+.pre-group-badge.info {
+  background: rgba(92, 163, 234, 0.9);
   color: white;
 }
 
 .player-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  min-width: 0;
 }
 
 .player-name-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 4px;
 }
 
 .player-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
 }
 
 .player-name:hover {
@@ -357,8 +417,9 @@ function getTierCn(tier: string): string {
 }
 
 .player-tag {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 
 .player-tier-row {
@@ -368,114 +429,28 @@ function getTierCn(tier: string): string {
 }
 
 .tier-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .tier-text {
   font-size: 11px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
-/* 近期战绩 */
-.player-history {
+/* 用户标签 */
+.user-tags-row {
   display: flex;
-  flex-direction: column;
   gap: 4px;
-  flex: 1;
-  min-width: 0;
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: var(--bg-tertiary);
-  border-radius: 6px;
-  font-size: 11px;
-  border-left: 2px solid #c45c5c;
-}
-
-.history-item.win {
-  border-left-color: #3d9b7a;
-}
-
-.win-status {
-  width: 14px;
-  color: #c45c5c;
-  font-weight: 600;
-}
-
-.win-status.win {
-  color: #3d9b7a;
-}
-
-.history-champ {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-}
-
-.history-kda {
-  color: var(--text-secondary);
-  font-size: 10px;
-}
-
-/* 右侧标签 */
-.player-right {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100px;
-  flex-shrink: 0;
-}
-
-.tags-row {
-  display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-}
-
-.pre-group-tag {
-  padding: 2px 6px;
-  font-size: 10px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.pre-group-tag.success {
-  background: rgba(61, 155, 122, 0.2);
-  color: #3d9b7a;
-}
-
-.pre-group-tag.warning {
-  background: rgba(242, 191, 99, 0.2);
-  color: #f2bf63;
-}
-
-.pre-group-tag.error {
-  background: rgba(196, 92, 92, 0.2);
-  color: #c45c5c;
-}
-
-.pre-group-tag.info {
-  background: rgba(92, 163, 234, 0.2);
-  color: #5ca3ea;
-}
-
-.meet-tag {
-  padding: 2px 6px;
-  font-size: 10px;
-  border-radius: 4px;
-  background: rgba(242, 191, 99, 0.2);
-  color: #f2bf63;
 }
 
 .user-tag {
-  padding: 2px 6px;
-  font-size: 10px;
-  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 9px;
+  border-radius: 3px;
+  font-weight: 600;
   cursor: help;
 }
 
@@ -489,28 +464,102 @@ function getTierCn(tier: string): string {
   color: #c45c5c;
 }
 
-/* 近期数据 */
-.recent-stats {
+/* 中间核心数据 */
+.player-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+}
+
+/* 最近战绩结果 */
+.recent-result {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  background: var(--bg-tertiary);
-  border-radius: 6px;
+  align-items: center;
+  gap: 2px;
 }
 
-.stat-row {
+.result-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   display: flex;
-  justify-content: space-between;
-  font-size: 11px;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.stat-label {
+.result-icon.win {
+  background: rgba(61, 155, 122, 0.2);
+  color: #3d9b7a;
+  border: 2px solid rgba(61, 155, 122, 0.4);
+}
+
+.result-icon.lose {
+  background: rgba(196, 92, 92, 0.2);
+  color: #c45c5c;
+  border: 2px solid rgba(196, 92, 92, 0.4);
+}
+
+.result-label {
+  font-size: 9px;
   color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* 数据项 */
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .stat-value {
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 9px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* KDA 样式 */
+.stat-value.kda {
+  font-size: 18px;
+}
+
+/* 胜率趋势箭头 */
+.trend-arrow {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.trend-arrow.up {
+  color: #3d9b7a;
+}
+
+.trend-arrow.down {
+  color: #c45c5c;
+}
+
+/* 遇见过提示 */
+.meet-indicator {
+  flex-shrink: 0;
+}
+
+.meet-icon {
+  font-size: 18px;
+  cursor: help;
+  filter: drop-shadow(0 0 4px rgba(242, 191, 99, 0.5));
 }
 
 /* 空状态 */

@@ -1,0 +1,35 @@
+[
+  {
+    "name": "com.ekko.insight.RankAnalysisApplication",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.sun.jna.Native",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.sun.jna.Platform",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.sun.jna.win32.W32APIOptions",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true
+  },
+  {
+    "name": "com.ekko.insight.jna.Kernel32",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.ekko.insight.jna.Ntdll",
+    "allDeclaredConstructors": true,
+    "allPublicMethods": true,
+    "allDeclaredMethods": true
+  }
+]

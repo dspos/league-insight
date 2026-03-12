@@ -32,8 +32,6 @@ public class LcuHttpClient {
     @Getter
     private volatile AuthInfo authInfo;
     private final ReentrantLock authLock = new ReentrantLock();
-    private volatile long lastAuthRefreshTime = 0;
-    private static final long AUTH_REFRESH_INTERVAL = 1000; // 1秒
 
     public LcuHttpClient() {
         this.objectMapper = new ObjectMapper();
@@ -85,13 +83,10 @@ public class LcuHttpClient {
     public AuthInfo getOrRefreshAuth() {
         authLock.lock();
         try {
-            long now = System.currentTimeMillis();
-            if (authInfo == null || !authInfo.isValid() ||
-                now - lastAuthRefreshTime > AUTH_REFRESH_INTERVAL) {
-
+            // 只在认证信息无效时才刷新
+            if (authInfo == null || !authInfo.isValid()) {
                 authInfo = ProcessUtils.getLcuAuthInfo();
                 if (authInfo != null) {
-                    lastAuthRefreshTime = now;
                     log.info("LCU 认证信息已更新: port={}", authInfo.getPort());
                 }
             }
@@ -108,9 +103,6 @@ public class LcuHttpClient {
         authLock.lock();
         try {
             authInfo = ProcessUtils.getLcuAuthInfo();
-            if (authInfo != null) {
-                lastAuthRefreshTime = System.currentTimeMillis();
-            }
         } finally {
             authLock.unlock();
         }

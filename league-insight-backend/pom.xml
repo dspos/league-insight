@@ -168,6 +168,7 @@
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
+                        <version>0.10.1</version>
                         <executions>
                             <execution>
                                 <id>build-native</id>
@@ -185,6 +186,7 @@
                                 <buildArg>--no-fallback</buildArg>
                                 <buildArg>-H:EnableURLProtocols=http,https</buildArg>
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
                             </buildArgs>
                         </configuration>
                     </plugin>

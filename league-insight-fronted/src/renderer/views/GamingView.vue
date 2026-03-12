@@ -17,7 +17,11 @@
           <span class="queue-name">{{ sessionData.typeCn || '未知模式' }}</span>
         </div>
         <button class="refresh-btn-small" @click="fetchSessionData" :disabled="loading">
-          {{ loading ? '刷新中...' : '刷新' }}
+          <span class="refresh-icon" :class="{ 'spinning': loading }">↻</span>
+          <span>{{ loading ? '刷新中...' : '刷新' }}</span>
+          <span v-if="loading" class="loading-bar">
+            <span class="loading-progress"></span>
+          </span>
         </button>
       </div>
 
@@ -25,7 +29,10 @@
       <div class="teams-container">
         <!-- 我方 -->
         <div class="team-column team-blue">
-          <div class="team-header team-header-blue">我方</div>
+          <div class="team-header team-header-blue">
+            <span class="team-icon">⚔</span>
+            我方队伍
+          </div>
           <div class="team-players">
             <PlayerCard
               v-for="(player, idx) in sessionData.teamOne"
@@ -39,13 +46,27 @@
 
         <!-- 敌方 -->
         <div class="team-column team-red">
-          <div class="team-header team-header-red">敌方</div>
-          <!-- 选人阶段不显示敌方 -->
+          <div class="team-header team-header-red">
+            <span class="team-icon">🛡</span>
+            敌方队伍
+          </div>
+          <!-- 选人阶段显示等待动画 -->
           <template v-if="sessionData.phase === 'ChampSelect'">
-            <div class="enemy-placeholder">
-              <span>选择中...</span>
+            <div class="enemy-loading">
+              <div class="loading-dots">
+                <span></span><span></span><span></span>
+              </div>
+              <span class="loading-text">等待对手选择...</span>
             </div>
           </template>
+          <!-- 敌方无数据时显示占位 -->
+          <template v-else-if="!sessionData.teamTwo || sessionData.teamTwo.length === 0">
+            <div class="enemy-placeholder">
+              <span class="placeholder-icon">👀</span>
+              <span>等待敌方数据...</span>
+            </div>
+          </template>
+          <!-- 正常显示敌方 -->
           <template v-else>
             <div class="team-players">
               <PlayerCard
@@ -170,6 +191,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 20px;
   color: var(--text-primary);
+  font-weight: 700;
 }
 
 .not-in-game p {
@@ -186,11 +208,13 @@ onUnmounted(() => {
   border-radius: 8px;
   font-size: 14px;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: all 0.15s;
+  font-weight: 600;
 }
 
 .refresh-btn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 /* 游戏中 */
@@ -221,7 +245,7 @@ onUnmounted(() => {
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   background: var(--bg-tertiary);
   color: var(--text-primary);
 }
@@ -244,9 +268,13 @@ onUnmounted(() => {
 .queue-name {
   font-size: 14px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .refresh-btn-small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 16px;
   background: var(--bg-tertiary);
   color: var(--text-primary);
@@ -255,6 +283,9 @@ onUnmounted(() => {
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+  font-weight: 600;
 }
 
 .refresh-btn-small:hover:not(:disabled) {
@@ -262,8 +293,44 @@ onUnmounted(() => {
 }
 
 .refresh-btn-small:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
   cursor: not-allowed;
+}
+
+.refresh-icon {
+  font-size: 14px;
+  transition: transform 0.3s;
+}
+
+.refresh-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+}
+
+.loading-progress {
+  display: block;
+  height: 100%;
+  background: var(--accent-color);
+  animation: loading-progress 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
 }
 
 /* 队伍 */
@@ -283,21 +350,28 @@ onUnmounted(() => {
 }
 
 .team-header {
-  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 600;
-  text-align: center;
+  font-weight: 700;
+}
+
+.team-icon {
+  font-size: 16px;
 }
 
 .team-header-blue {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.1));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.1));
   color: #93c5fd;
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .team-header-red {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.1));
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(239, 68, 68, 0.1));
   color: #fca5a5;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
@@ -310,15 +384,70 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
+/* 敌方加载状态 */
+.enemy-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 10px;
+  border: 1px dashed rgba(239, 68, 68, 0.3);
+}
+
+.loading-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background: rgba(239, 68, 68, 0.5);
+  border-radius: 50%;
+  animation: dot-bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 敌方占位 */
 .enemy-placeholder {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.05);
   border-radius: 10px;
-  border: 1px dashed var(--border-color);
+  border: 1px dashed rgba(239, 68, 68, 0.3);
   color: var(--text-tertiary);
   font-size: 14px;
+}
+
+.placeholder-icon {
+  font-size: 32px;
+  opacity: 0.6;
 }
 </style>

@@ -1,23 +1,4 @@
 [ {
-  "id" : "default_streak_loss",
-  "name" : "{N}连败",
-  "desc" : "最近连败的玩家哦",
-  "good" : false,
-  "enabled" : true,
-  "isDefault" : true,
-  "condition" : {
-    "type" : "history",
-    "filters" : [ {
-      "type" : "queue",
-      "ids" : [ 420, 440 ]
-    } ],
-    "refresh" : {
-      "type" : "streak",
-      "min" : 3,
-      "kind" : "LOSS"
-    }
-  }
-}, {
   "id" : "default_casual",
   "name" : "娱乐",
   "desc" : "排位比例较少",
@@ -28,7 +9,7 @@
     "type" : "history",
     "filters" : [ {
       "type" : "queue",
-      "ids" : [ 430, 450, 900 ]
+      "ids" : [ 430, 450, 900, 1900, 2000 ]
     } ],
     "refresh" : {
       "type" : "count",
@@ -47,7 +28,7 @@
     "type" : "history",
     "filters" : [ {
       "type" : "queue",
-      "ids" : [ 420, 440 ]
+      "ids" : [ 430, 420, 440, 450, 2400 ]
     }, {
       "type" : "stat",
       "metric" : "deaths",
@@ -71,7 +52,7 @@
     "type" : "history",
     "filters" : [ {
       "type" : "queue",
-      "ids" : [ 420, 440 ]
+      "ids" : [ 430, 420, 440, 450, 2400 ]
     }, {
       "type" : "stat",
       "metric" : "kda",
@@ -95,7 +76,7 @@
     "type" : "history",
     "filters" : [ {
       "type" : "queue",
-      "ids" : [ 420, 440 ]
+      "ids" : [ 430, 420, 440, 450, 2400 ]
     }, {
       "type" : "champion",
       "ids" : [ 901 ]
@@ -108,7 +89,7 @@
   }
 }, {
   "id" : "default_streak_win",
-  "name" : "2连胜",
+  "name" : "1连胜",
   "desc" : "最近胜率较高的大腿玩家哦",
   "good" : true,
   "enabled" : true,
@@ -117,12 +98,31 @@
     "type" : "history",
     "filters" : [ {
       "type" : "queue",
-      "ids" : [ 420, 440 ]
+      "ids" : [ 430, 420, 440, 450, 2400 ]
     } ],
     "refresh" : {
       "type" : "streak",
       "min" : 3,
       "kind" : "WIN"
+    }
+  }
+}, {
+  "id" : "default_streak_loss",
+  "name" : "1连败",
+  "desc" : "最近连败的玩家哦",
+  "good" : false,
+  "enabled" : true,
+  "isDefault" : true,
+  "condition" : {
+    "type" : "history",
+    "filters" : [ {
+      "type" : "queue",
+      "ids" : [ 430, 420, 440, 450, 2400 ]
+    } ],
+    "refresh" : {
+      "type" : "streak",
+      "min" : 3,
+      "kind" : "LOSS"
     }
   }
 } ]

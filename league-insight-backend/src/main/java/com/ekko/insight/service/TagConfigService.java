@@ -60,12 +60,19 @@ public class TagConfigService {
     public List<RankTag> evaluateTags(List<MatchHistory> matchHistory, String puuid, Integer currentMode) {
         List<RankTag> result = new ArrayList<>();
 
+        log.debug("evaluateTags 开始, tagConfigs数量: {}, matchHistory数量: {}",
+                tagConfigs.size(), matchHistory.size());
+
         for (TagConfig config : tagConfigs) {
             if (!Boolean.TRUE.equals(config.getEnabled())) {
+                log.debug("标签 {} 未启用，跳过", config.getId());
                 continue;
             }
 
-            if (evaluateCondition(config.getCondition(), matchHistory, puuid, currentMode)) {
+            boolean matched = evaluateCondition(config.getCondition(), matchHistory, puuid, currentMode);
+            log.debug("标签 {} 条件评估结果: {}", config.getId(), matched);
+
+            if (matched) {
                 String displayName = formatName(config.getName(), matchHistory, puuid);
                 result.add(RankTag.builder()
                         .good(config.getGood())
@@ -103,25 +110,41 @@ public class TagConfigService {
         // 应用过滤器
         List<MatchHistory> filtered = history;
         for (MatchFilter filter : condition.getFilters()) {
+            int beforeSize = filtered.size();
             filtered = applyFilter(filtered, filter, puuid);
+            log.debug("过滤后: {} -> {} 条记录, filter={}", beforeSize, filtered.size(), filter.getClass().getSimpleName());
         }
 
         // 应用刷新器
-        return applyRefresh(condition.getRefresh(), filtered, puuid);
+        boolean result = applyRefresh(condition.getRefresh(), filtered, puuid);
+        log.debug("刷新器结果: {}, filtered.size={}, refresh={}", result, filtered.size(),
+                condition.getRefresh().getClass().getSimpleName());
+        return result;
     }
 
     private List<MatchHistory> applyFilter(List<MatchHistory> games, MatchFilter filter, String puuid) {
         if (filter instanceof MatchFilter.QueueFilter qf) {
-            return games.stream()
-                    .filter(g -> qf.getIds().contains(g.getQueueId()))
+            List<MatchHistory> result = games.stream()
+                    .filter(g -> g.getQueueId() != null && qf.getIds().contains(g.getQueueId()))
                     .toList();
+
+            // 调试：打印所有 queueId
+            if (result.isEmpty() && !games.isEmpty()) {
+                List<Integer> queueIds = games.stream()
+                        .map(MatchHistory::getQueueId)
+                        .distinct()
+                        .toList();
+                log.debug("QueueFilter 无匹配! 过滤目标: {}, 实际 queueIds: {}", qf.getIds(), queueIds);
+            }
+
+            return result;
         }
 
         if (filter instanceof MatchFilter.ChampionFilter cf) {
             return games.stream()
                     .filter(g -> {
                         MatchHistory.Participant p = findParticipant(g, puuid);
-                        return p != null && cf.getIds().contains(p.getChampionId());
+                        return p != null && p.getChampionId() != null && cf.getIds().contains(p.getChampionId());
                     })
                     .toList();
         }
@@ -340,8 +363,14 @@ public class TagConfigService {
     public List<TagConfig> getDefaultTags() {
         List<TagConfig> defaults = new ArrayList<>();
 
-        // 排位过滤器
-        List<Integer> rankedIds = List.of(QUEUE_SOLO_5X5, QUEUE_FLEX);
+        // 排位过滤器（包含所有排位类型）
+        List<Integer> rankedIds = List.of(
+                430,
+                420,
+                440,
+                450,
+                2400
+        );
 
         // 连胜标签
         defaults.add(TagConfig.builder()
@@ -372,7 +401,7 @@ public class TagConfigService {
                 .build());
 
         // 娱乐玩家标签
-        List<Integer> casualIds = List.of(430, 450, 900); // 匹配、大乱斗等
+        List<Integer> casualIds = List.of(430, 450, 900, 1900, 2000); // 匹配、大乱斗等
         defaults.add(TagConfig.builder()
                 .id("default_casual")
                 .name("娱乐")
