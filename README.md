@@ -740,7 +740,7 @@ build.bat
 
 ### 后端构建
 
-#### 方式一：Native Image（推荐）
+#### Native Image 编译
 
 Native Image 编译为独立可执行文件，无需 JRE，启动更快。
 
@@ -748,18 +748,19 @@ Native Image 编译为独立可执行文件，无需 JRE，启动更快。
 # 进入后端目录
 cd league-insight-backend
 
-# 运行 Native Image 构建脚本
-build-native.bat
-
-# 或手动构建（需先初始化 MSVC 环境）
+# 初始化 MSVC 环境
 call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+
+# 设置 GraalVM
 set JAVA_HOME=C:\path\to\graalvm-jdk-21
+
+# 编译 Native Image
 mvn package -Pnative -DskipTests
 ```
 
-**输出文件：** `target/league-insight-native.exe`（约 95MB）
+**输出文件：** `target/league-insight-native.exe`（约 50MB）
 
-#### 方式二：JAR 包（开发调试）
+#### JAR 包（开发调试）
 
 ```bash
 # Maven 构建
@@ -789,13 +790,13 @@ npm run electron:build
 
 ```
 release/
-├── LeagueInsight Setup 1.0.0.exe   # Windows 安装包（约 103MB）
+├── LeagueInsight Setup 1.0.0.exe   # Windows 安装包（约 320MB）
 └── win-unpacked/                   # 免安装版本
     ├── LeagueInsight.exe           # 主程序
     └── resources/
-        ├── app.asar                # 前端资源
+        ├── app.asar                # 前端资源（约 24MB）
         ├── backend/                # 后端程序
-        │   └── league-insight-backend.exe  # Native Image 后端
+        │   └── league-insight-backend.exe  # Native Image 后端（约 50MB）
         └── public/                 # 静态资源
 ```
 
@@ -803,10 +804,10 @@ release/
 
 | 特性 | Native Image | JAR 包 |
 |-----|-------------|-------|
-| 启动时间 | ~0.1 秒 | ~3 秒 |
+| 启动时间 | ~0.5 秒 | ~3 秒 |
 | 内存占用 | 更低 | 较高 |
 | 依赖 | 无需 JRE | 需要 JRE 21 |
-| 文件大小 | ~95MB | ~29MB JAR + JRE |
+| 后端大小 | ~50MB | ~29MB JAR + JRE |
 
 ### GraalVM 配置
 
