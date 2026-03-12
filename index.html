@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Insight - 英雄联盟战绩查询工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'hextech': {
+                            50: '#eef9ff',
+                            100: '#d8f1ff',
+                            200: '#b9e7ff',
+                            300: '#89daff',
+                            400: '#52c4ff',
+                            500: '#2aa6ff',
+                            600: '#1489f5',
+                            700: '#0d6fe1',
+                            800: '#1259b6',
+                            900: '#154c8f',
+                            950: '#0f2f57',
+                        },
+                        'gold': {
+                            400: '#f0c040',
+                            500: '#c9a227',
+                            600: '#a68520',
+                        },
+                        'dark': {
+                            800: '#1a1a2e',
+                            900: '#0f0f1a',
+                            950: '#080810',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'float': 'float 6s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 20px rgba(42, 166, 255, 0.3);
+            }
+            to {
+                box-shadow: 0 0 40px rgba(42, 166, 255, 0.6);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #2aa6ff 0%, #c9a227 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-bg {
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(42, 166, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 50%, rgba(201, 162, 39, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(42, 166, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(180deg, #0f0f1a 0%, #080810 100%);
+        }
+
+        .card-gradient {
+            background: linear-gradient(145deg, rgba(26, 26, 46, 0.8) 0%, rgba(15, 15, 26, 0.9) 100%);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2aa6ff 0%, #1489f5 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #52c4ff 0%, #2aa6ff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(42, 166, 255, 0.4);
+        }
+
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #2aa6ff, #c9a227);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .tech-badge {
+            transition: all 0.3s ease;
+        }
+
+        .tech-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(42, 166, 255, 0.2);
+        }
+
+        .screenshot-card {
+            transition: all 0.3s ease;
+        }
+
+        .screenshot-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 25px 50px rgba(42, 166, 255, 0.2);
+        }
+
+        .faq-item {
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            background: rgba(42, 166, 255, 0.05);
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #2aa6ff, #c9a227);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .tier-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f0f1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2aa6ff;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52c4ff;
+        }
+    </style>
+</head>
+<body class="bg-dark-950 text-gray-100 font-sans antialiased">
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-dark-950/80 backdrop-blur-lg border-b border-gray-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-hextech-500 to-hextech-700 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold gradient-text">League Insight</span>
+                </div>
+
+                <!-- 桌面端导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="nav-link text-gray-300 hover:text-hextech-400 transition-colors">功能特点</a>
+                    <a href="#tech" class="nav-link text-gray-300 hover:text-hextech-400 transition-colors">技术栈</a>
+                    <a href="#showcase" class="nav-link text-gray-300 hover:text-hextech-400 transition-colors">软件截图</a>
+                    <a href="#faq" class="nav-link text-gray-300 hover:text-hextech-400 transition-colors">常见问题</a>
+                    <a href="#download" class="btn-primary px-6 py-2 rounded-lg font-semibold text-white">下载</a>
+                </div>
+
+                <!-- 移动端菜单按钮 -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden bg-dark-900/95 backdrop-blur-lg border-t border-gray-800/50">
+            <div class="px-4 py-4 space-y-3">
+                <a href="#features" class="block px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">功能特点</a>
+                <a href="#tech" class="block px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">技术栈</a>
+                <a href="#showcase" class="block px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">软件截图</a>
+                <a href="#faq" class="block px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">常见问题</a>
+                <a href="#download" class="block px-4 py-2 rounded-lg btn-primary text-white text-center font-semibold">下载</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero 区域 -->
+    <section class="hero-bg min-h-screen flex items-center justify-center pt-16 relative overflow-hidden">
+        <!-- 背景装饰 -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-hextech-500/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gold-500/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+            <!-- 标签 -->
+            <div class="inline-flex items-center px-4 py-2 rounded-full bg-hextech-500/10 border border-hextech-500/30 text-hextech-400 text-sm font-medium mb-8">
+                <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                开源免费 · 持续更新
+            </div>
+
+            <!-- 主标题 -->
+            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
+                <span class="text-white">英雄联盟</span><br>
+                <span class="gradient-text">战绩查询工具</span>
+            </h1>
+
+            <!-- 副标题 -->
+            <p class="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                基于 LCU 的专业战绩分析工具<br class="hidden sm:block">
+                召唤师查询、战绩分析、用户标签、自动化操作
+            </p>
+
+            <!-- 下载按钮 -->
+            <div id="download" class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                <a href="#" class="btn-primary px-10 py-4 rounded-xl font-bold text-lg text-white flex items-center gap-3 animate-glow">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    立即下载
+                    <span class="px-2 py-0.5 bg-white/20 rounded text-sm">v1.0.0</span>
+                </a>
+                <div class="flex items-center gap-3">
+                    <a href="https://github.com/dspos" target="_blank" class="px-8 py-4 rounded-xl font-semibold text-gray-300 border border-gray-700 hover:border-hextech-500 hover:text-hextech-400 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                    <a href="https://gitee.com/dspos" target="_blank" class="px-8 py-4 rounded-xl font-semibold text-gray-300 border border-gray-700 hover:border-red-500 hover:text-red-400 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.016 0zm6.09 5.333c.328 0 .593.266.592.593v1.482a.594.594 0 0 1-.593.592H9.777c-.982 0-1.778.796-1.778 1.778v5.63c0 .327.266.592.593.592h5.63c.327 0 .593-.265.593-.593v-1.481a.593.593 0 0 0-.593-.593h-3.556a.593.593 0 0 1-.593-.593V9.778c0-.327.266-.593.593-.593h5.334c.327 0 .593.266.593.593v6.815a2.37 2.37 0 0 1-2.37 2.37H6.518a.593.593 0 0 1-.593-.593V9.778a4.444 4.444 0 0 1 4.444-4.445h7.705z"/>
+                        </svg>
+                        Gitee
+                    </a>
+                </div>
+            </div>
+
+            <!-- 系统要求 -->
+            <p class="mt-6 text-xs text-gray-600">
+                支持 Windows 10/11 (64位) · 基于 Java 21 + Electron
+            </p>
+
+            <!-- 核心功能标签 -->
+            <div class="flex flex-wrap justify-center gap-3 mt-12">
+                <span class="px-4 py-2 rounded-full bg-dark-800 border border-gray-700 text-sm text-gray-300">
+                    <span class="text-hextech-400 mr-1">✓</span> 召唤师查询
+                </span>
+                <span class="px-4 py-2 rounded-full bg-dark-800 border border-gray-700 text-sm text-gray-300">
+                    <span class="text-hextech-400 mr-1">✓</span> 战绩分析
+                </span>
+                <span class="px-4 py-2 rounded-full bg-dark-800 border border-gray-700 text-sm text-gray-300">
+                    <span class="text-hextech-400 mr-1">✓</span> 用户标签
+                </span>
+                <span class="px-4 py-2 rounded-full bg-dark-800 border border-gray-700 text-sm text-gray-300">
+                    <span class="text-hextech-400 mr-1">✓</span> 自动化操作
+                </span>
+                <span class="px-4 py-2 rounded-full bg-dark-800 border border-gray-700 text-sm text-gray-300">
+                    <span class="text-hextech-400 mr-1">✓</span> ARAM 数据
+                </span>
+            </div>
+        </div>
+
+        <!-- 向下滚动提示 -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- 核心功能 -->
+    <section id="features" class="py-20 sm:py-28 bg-dark-900 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">
+                    核心功能
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    专为召唤师打造的专业工具，数据精准、功能强大、体验流畅
+                </p>
+            </div>
+
+            <!-- 功能卡片 Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 卡片 1 - 召唤师查询 -->
+                <div class="feature-card relative card-gradient rounded-2xl p-6 border border-gray-800/50 overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-hextech-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-hextech-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-3">召唤师查询</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        查询召唤师信息、段位排名、胜率统计，支持按游戏名称和标签行搜索
+                    </p>
+                </div>
+
+                <!-- 卡片 2 - 战绩分析 -->
+                <div class="feature-card relative card-gradient rounded-2xl p-6 border border-gray-800/50 overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-gold-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-3">战绩分析</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        查看详细战绩记录、KDA 统计、英雄胜率，支持按队列类型筛选
+                    </p>
+                </div>
+
+                <!-- 卡片 3 - 用户标签 -->
+                <div class="feature-card relative card-gradient rounded-2xl p-6 border border-gray-800/50 overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-3">用户标签</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        根据战绩自动生成标签：连胜王、峡谷慈善家、英雄专精等，支持自定义规则
+                    </p>
+                </div>
+
+                <!-- 卡片 4 - 自动化操作 -->
+                <div class="feature-card relative card-gradient rounded-2xl p-6 border border-gray-800/50 overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-3">自动化操作</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        自动匹配、自动接受、自动选人/禁人，预设英雄列表一键配置
+                    </p>
+                </div>
+
+                <!-- 卡片 5 - 好友/冤家分析 -->
+                <div class="feature-card relative card-gradient rounded-2xl p-6 border border-gray-800/50 overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-red-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-3">好友/冤家分析</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        分析近期对局中遇到的玩家，识别经常组队的好友和多次遇到的对手
+                    </p>
+                </div>
+
+                <!-- 卡片 6 - ARAM 数据 -->
+                <div class="feature-card relative card-gradient rounded-2xl p-6 border border-gray-800/50 overflow-hidden">
+                    <div class="w-14 h-14 rounded-xl bg-yellow-500/10 flex items-center justify-center mb-5">
+                        <svg class="w-7 h-7 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-3">ARAM 数据</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        从 Fandom 获取 ARAM 英雄平衡数据，包括伤害调整、治疗调整等
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 技术栈 -->
+    <section id="tech" class="py-20 sm:py-28 bg-dark-950 relative overflow-hidden">
+        <!-- 背景装饰 -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-hextech-500/5 rounded-full blur-3xl"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <!-- 标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">
+                    技术架构
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    采用现代化技术栈，确保高性能与良好的用户体验
+                </p>
+            </div>
+
+            <!-- 技术栈展示 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- 后端技术栈 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800/50">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-hextech-500/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-hextech-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">后端</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="tech-badge flex items-center gap-4 p-3 rounded-lg bg-dark-800/50 border border-gray-700/50">
+                            <div class="w-10 h-10 rounded bg-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-sm">J21</div>
+                            <div>
+                                <div class="font-semibold text-white">Java 21</div>
+                                <div class="text-xs text-gray-500">支持 Virtual Threads</div>
+                            </div>
+                        </div>
+                        <div class="tech-badge flex items-center gap-4 p-3 rounded-lg bg-dark-800/50 border border-gray-700/50">
+                            <div class="w-10 h-10 rounded bg-green-500/20 flex items-center justify-center text-green-400 font-bold text-sm">SB</div>
+                            <div>
+                                <div class="font-semibold text-white">Spring Boot 3.2</div>
+                                <div class="text-xs text-gray-500">核心框架</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">OkHttp</span>
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">WebSocket</span>
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">Caffeine</span>
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">JNA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 前端技术栈 -->
+                <div class="card-gradient rounded-2xl p-8 border border-gray-800/50">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gold-500/20 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">前端</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="tech-badge flex items-center gap-4 p-3 rounded-lg bg-dark-800/50 border border-gray-700/50">
+                            <div class="w-10 h-10 rounded bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">E</div>
+                            <div>
+                                <div class="font-semibold text-white">Electron 28</div>
+                                <div class="text-xs text-gray-500">桌面应用框架</div>
+                            </div>
+                        </div>
+                        <div class="tech-badge flex items-center gap-4 p-3 rounded-lg bg-dark-800/50 border border-gray-700/50">
+                            <div class="w-10 h-10 rounded bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">V</div>
+                            <div>
+                                <div class="font-semibold text-white">Vue 3 + TypeScript</div>
+                                <div class="text-xs text-gray-500">前端框架</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">Pinia</span>
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">Vue Router</span>
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">Vite</span>
+                            <span class="px-3 py-1 rounded-full bg-dark-800 text-xs text-gray-400 border border-gray-700">STOMP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 软件截图展示 -->
+    <section id="showcase" class="py-20 sm:py-28 bg-dark-900 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">
+                    界面预览
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    现代化设计，极致流畅体验
+                </p>
+            </div>
+
+            <!-- 截图卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 截图 1 - 召唤师查询 -->
+                <div class="screenshot-card rounded-2xl overflow-hidden bg-dark-800 border border-gray-800/50 shadow-2xl">
+                    <div class="aspect-video bg-gradient-to-br from-dark-800 to-dark-900 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-xl bg-hextech-500/20 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-hextech-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-500 text-sm">召唤师查询界面</p>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-white mb-1">召唤师查询</h3>
+                        <p class="text-gray-400 text-sm">段位、胜率、战绩一目了然</p>
+                    </div>
+                </div>
+
+                <!-- 截图 2 - 用户标签 -->
+                <div class="screenshot-card rounded-2xl overflow-hidden bg-dark-800 border border-gray-800/50 shadow-2xl md:transform md:scale-110 md:z-10">
+                    <div class="aspect-video bg-gradient-to-br from-dark-800 to-dark-900 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-xl bg-gold-500/20 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-500 text-sm">用户标签界面</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-gradient-to-br from-hextech-500/5 to-gold-500/5">
+                        <h3 class="font-semibold text-white mb-1">用户标签</h3>
+                        <p class="text-gray-400 text-sm">智能分析玩家特征</p>
+                    </div>
+                </div>
+
+                <!-- 截图 3 - 自动化设置 -->
+                <div class="screenshot-card rounded-2xl overflow-hidden bg-dark-800 border border-gray-800/50 shadow-2xl">
+                    <div class="aspect-video bg-gradient-to-br from-dark-800 to-dark-900 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-xl bg-green-500/20 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                            <p class="text-gray-500 text-sm">自动化设置界面</p>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-white mb-1">自动化操作</h3>
+                        <p class="text-gray-400 text-sm">一键配置，解放双手</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 标签配置系统 -->
+    <section class="py-20 sm:py-28 bg-dark-950 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- 左侧文字 -->
+                <div>
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
+                        灵活的<span class="gradient-text">标签配置</span>系统
+                    </h2>
+                    <p class="text-gray-400 mb-8 leading-relaxed">
+                        支持自定义标签规则，使用条件树结构实现复杂的判断逻辑。你可以根据自己的需求创建专属标签。
+                    </p>
+
+                    <!-- 特性列表 -->
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-hextech-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 text-hextech-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-white mb-1">条件树结构</h4>
+                                <p class="text-gray-500 text-sm">支持 AND/OR/NOT 逻辑组合</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-hextech-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 text-hextech-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-white mb-1">多种过滤器</h4>
+                                <p class="text-gray-500 text-sm">按队列、英雄、统计数据过滤</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-hextech-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg class="w-4 h-4 text-hextech-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-white mb-1">丰富刷新器</h4>
+                                <p class="text-gray-500 text-sm">计数、平均、求和、最大/最小值、连胜统计</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧代码示例 -->
+                <div class="card-gradient rounded-2xl p-6 border border-gray-800/50">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span class="ml-4 text-xs text-gray-500">tag-config.json</span>
+                    </div>
+                    <pre class="text-sm text-gray-300 overflow-x-auto"><code>{
+  "id": "win-streak",
+  "name": "连胜王",
+  "template": "{N}连胜",
+  "enabled": true,
+  "condition": {
+    "type": "history",
+    "filter": {
+      "queueId": 420,
+      "result": "win"
+    },
+    "refresh": {
+      "type": "streak"
+    }
+  }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 常见问题 -->
+    <section id="faq" class="py-20 sm:py-28 bg-dark-900">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 标题 -->
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">
+                    常见问题
+                </h2>
+                <p class="text-gray-400">
+                    解答你的疑惑
+                </p>
+            </div>
+
+            <!-- FAQ 列表 -->
+            <div class="space-y-4">
+                <!-- FAQ 1 -->
+                <div class="faq-item rounded-xl border border-gray-800/50 bg-dark-800/50 overflow-hidden">
+                    <button class="faq-btn w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleFaq(this)">
+                        <span class="font-semibold text-white flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-hextech-500/10 flex items-center justify-center text-hextech-400 text-sm font-bold">Q</span>
+                            使用这个软件会封号吗？
+                        </span>
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform faq-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-5">
+                        <p class="text-gray-400 pl-11 leading-relaxed">
+                            软件通过读取英雄联盟客户端（LCU）的本地 API 工作，不修改游戏内存，不注入进程。数据来源于 Riot 官方提供的本地接口，原理上安全。但请合理使用自动化功能，避免频繁操作。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="faq-item rounded-xl border border-gray-800/50 bg-dark-800/50 overflow-hidden">
+                    <button class="faq-btn w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleFaq(this)">
+                        <span class="font-semibold text-white flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-hextech-500/10 flex items-center justify-center text-hextech-400 text-sm font-bold">Q</span>
+                            支持什么操作系统？
+                        </span>
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform faq-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-5">
+                        <p class="text-gray-400 pl-11 leading-relaxed">
+                            目前仅支持 <strong class="text-white">Windows 10/11 (64位)</strong> 系统。由于使用了 JNA 调用 Windows API 读取进程信息，暂不支持 macOS 和 Linux。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="faq-item rounded-xl border border-gray-800/50 bg-dark-800/50 overflow-hidden">
+                    <button class="faq-btn w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleFaq(this)">
+                        <span class="font-semibold text-white flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-hextech-500/10 flex items-center justify-center text-hextech-400 text-sm font-bold">Q</span>
+                            软件无法连接到客户端？
+                        </span>
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform faq-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-5">
+                        <p class="text-gray-400 pl-11 leading-relaxed">
+                            请确保英雄联盟客户端正在运行。如果客户端已启动但仍无法连接，尝试以管理员身份运行软件，或重启客户端后再试。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="faq-item rounded-xl border border-gray-800/50 bg-dark-800/50 overflow-hidden">
+                    <button class="faq-btn w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleFaq(this)">
+                        <span class="font-semibold text-white flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-hextech-500/10 flex items-center justify-center text-hextech-400 text-sm font-bold">Q</span>
+                            支持哪些服务器？
+                        </span>
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform faq-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-5">
+                        <p class="text-gray-400 pl-11 leading-relaxed">
+                            理论上支持所有使用 Riot 客户端的服务器，包括国服、韩服、美服、欧服等。<strong class="text-white">不支持腾讯服</strong>（如部分网吧特供版）。
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 5 -->
+                <div class="faq-item rounded-xl border border-gray-800/50 bg-dark-800/50 overflow-hidden">
+                    <button class="faq-btn w-full px-6 py-5 flex items-center justify-between text-left" onclick="toggleFaq(this)">
+                        <span class="font-semibold text-white flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-hextech-500/10 flex items-center justify-center text-hextech-400 text-sm font-bold">Q</span>
+                            如何自定义用户标签？
+                        </span>
+                        <svg class="w-5 h-5 text-gray-400 transform transition-transform faq-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="faq-content hidden px-6 pb-5">
+                        <p class="text-gray-400 pl-11 leading-relaxed">
+                            在软件的「标签配置」页面，可以添加、编辑、删除标签规则。规则使用条件树结构，支持按队列、英雄、战绩数据等条件进行筛选和统计。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA 区域 -->
+    <section class="py-20 sm:py-28 hero-bg relative overflow-hidden">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-hextech-500/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
+                准备好提升你的游戏体验了吗？
+            </h2>
+            <p class="text-gray-400 mb-10 max-w-xl mx-auto">
+                立即下载 League Insight，享受专业的战绩分析和辅助功能
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="#download" class="inline-flex items-center gap-3 btn-primary px-10 py-4 rounded-xl font-bold text-lg text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    立即下载 v1.0.0
+                </a>
+                <div class="flex items-center gap-3">
+                    <a href="https://github.com/dspos" target="_blank" class="px-8 py-4 rounded-xl font-semibold text-gray-300 border border-gray-700 hover:border-hextech-500 hover:text-hextech-400 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                    <a href="https://gitee.com/dspos" target="_blank" class="px-8 py-4 rounded-xl font-semibold text-gray-300 border border-gray-700 hover:border-red-500 hover:text-red-400 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.016 0zm6.09 5.333c.328 0 .593.266.592.593v1.482a.594.594 0 0 1-.593.592H9.777c-.982 0-1.778.796-1.778 1.778v5.63c0 .327.266.592.593.592h5.63c.327 0 .593-.265.593-.593v-1.481a.593.593 0 0 0-.593-.593h-3.556a.593.593 0 0 1-.593-.593V9.778c0-.327.266-.593.593-.593h5.334c.327 0 .593.266.593.593v6.815a2.37 2.37 0 0 1-2.37 2.37H6.518a.593.593 0 0 1-.593-.593V9.778a4.444 4.444 0 0 1 4.444-4.445h7.705z"/>
+                        </svg>
+                        Gitee
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="py-12 bg-dark-950 border-t border-gray-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Logo 和链接 -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-hextech-500 to-hextech-700 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-bold text-white">League Insight</span>
+                </div>
+
+                <div class="flex items-center gap-6 text-sm text-gray-400">
+                    <a href="mailto:yetao1766@163.com" class="hover:text-hextech-400 transition-colors">联系我们</a>
+                    <a href="https://github.com/dspos" target="_blank" class="hover:text-hextech-400 transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                    <a href="https://gitee.com/dspos" target="_blank" class="hover:text-red-400 transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.016 0zm6.09 5.333c.328 0 .593.266.592.593v1.482a.594.594 0 0 1-.593.592H9.777c-.982 0-1.778.796-1.778 1.778v5.63c0 .327.266.592.593.592h5.63c.327 0 .593-.265.593-.593v-1.481a.593.593 0 0 0-.593-.593h-3.556a.593.593 0 0 1-.593-.593V9.778c0-.327.266-.593.593-.593h5.334c.327 0 .593.266.593.593v6.815a2.37 2.37 0 0 1-2.37 2.37H6.518a.593.593 0 0 1-.593-.593V9.778a4.444 4.444 0 0 1 4.444-4.445h7.705z"/>
+                        </svg>
+                        Gitee
+                    </a>
+                </div>
+            </div>
+
+            <!-- 免责声明 -->
+            <div class="border-t border-gray-800/50 pt-8">
+                <p class="text-xs text-gray-600 text-center leading-relaxed max-w-3xl mx-auto">
+                    <strong class="text-gray-500">免责声明：</strong>本产品未获得 Riot Games, Inc. 的认可，也不代表 Riot Games, Inc. 的观点或意见。
+                    League of Legends、Riot Games 及其所有相关资源均为 Riot Games, Inc. 的商标或注册商标。
+                    本软件仅供学习交流使用，请勿用于商业用途。使用本软件所产生的一切后果由用户自行承担。
+                </p>
+            </div>
+
+            <!-- 版权 -->
+            <div class="mt-8 text-center">
+                <p class="text-xs text-gray-600">
+                    &copy; 2026 League Insight. MIT License.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 移动端菜单切换
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = document.getElementById('menu-icon');
+        let isMenuOpen = false;
+
+        mobileMenuBtn.addEventListener('click', () => {
+            isMenuOpen = !isMenuOpen;
+            mobileMenu.classList.toggle('hidden');
+            menuIcon.setAttribute('d', isMenuOpen
+                ? 'M6 18L18 6M6 6l12 12'
+                : 'M4 6h16M4 12h16M4 18h16'
+            );
+        });
+
+        // 点击导航链接后关闭移动端菜单
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                isMenuOpen = false;
+                mobileMenu.classList.add('hidden');
+                menuIcon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+            });
+        });
+
+        // FAQ 手风琴切换
+        function toggleFaq(btn) {
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('.faq-icon');
+            const isHidden = content.classList.contains('hidden');
+
+            // 关闭其他打开的 FAQ
+            document.querySelectorAll('.faq-content').forEach(item => {
+                if (item !== content) {
+                    item.classList.add('hidden');
+                }
+            });
+            document.querySelectorAll('.faq-icon').forEach(item => {
+                if (item !== icon) {
+                    item.classList.remove('rotate-180');
+                }
+            });
+
+            // 切换当前 FAQ
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 导航栏滚动效果
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            const currentScroll = window.pageYOffset;
+
+            if (currentScroll > 100) {
+                nav.classList.add('shadow-lg', 'shadow-black/20');
+            } else {
+                nav.classList.remove('shadow-lg', 'shadow-black/20');
+            }
+
+            lastScroll = currentScroll;
+        });
+    </script>
+</body>
+</html>

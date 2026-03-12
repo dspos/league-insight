@@ -1,0 +1,167 @@
+package com.ekko.insight.config;
+
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * 应用配置
+ */
+@Data
+@Configuration
+@ConfigurationProperties(prefix = "app")
+public class AppConfig {
+
+    /**
+     * 设置项
+     */
+    private Settings settings = new Settings();
+
+    /**
+     * 动态配置存储
+     */
+    private final Map<String, Object> dynamicConfig = new ConcurrentHashMap<>();
+
+    @Data
+    public static class Settings {
+        private Auto auto = new Auto();
+        private Ai ai = new Ai();
+    }
+
+    @Data
+    public static class Auto {
+        /**
+         * 自动开始匹配
+         */
+        private boolean startMatchSwitch = false;
+
+        /**
+         * 自动接受对局
+         */
+        private boolean acceptMatchSwitch = false;
+
+        /**
+         * 自动选择英雄
+         */
+        private boolean pickChampionSwitch = false;
+
+        /**
+         * 自动禁用英雄
+         */
+        private boolean banChampionSwitch = false;
+
+        /**
+         * 选择英雄列表
+         */
+        private List<Integer> pickChampionSlice = new ArrayList<>();
+
+        /**
+         * 禁用英雄列表
+         */
+        private List<Integer> banChampionSlice = new ArrayList<>();
+    }
+
+    @Data
+    public static class Ai {
+        /**
+         * AI 分析开关
+         */
+        private boolean enabled = false;
+
+        /**
+         * API Key
+         */
+        private String apiKey;
+
+        /**
+         * API 端点
+         */
+        private String endpoint;
+
+        /**
+         * 模型名称
+         */
+        private String model;
+    }
+
+    // ========== 便捷方法 ==========
+
+    public boolean isAutoMatchEnabled() {
+        return settings.getAuto().isStartMatchSwitch();
+    }
+
+    public boolean isAutoAcceptEnabled() {
+        return settings.getAuto().isAcceptMatchSwitch();
+    }
+
+    public boolean isAutoPickEnabled() {
+        return settings.getAuto().isPickChampionSwitch();
+    }
+
+    public boolean isAutoBanEnabled() {
+        return settings.getAuto().isBanChampionSwitch();
+    }
+
+    public List<Integer> getPickChampions() {
+        return settings.getAuto().getPickChampionSlice();
+    }
+
+    public List<Integer> getBanChampions() {
+        return settings.getAuto().getBanChampionSlice();
+    }
+
+    /**
+     * 更新配置
+     */
+    public void updateConfig(String key, Object value) {
+        dynamicConfig.put(key, value);
+
+        // 同步更新内部设置
+        updateInternalSettings(key, value);
+    }
+
+    private void updateInternalSettings(String key, Object value) {
+        if (key.startsWith("settings.auto.")) {
+            String autoKey = key.substring("settings.auto.".length());
+
+            switch (autoKey) {
+                case "startMatchSwitch" -> settings.getAuto().setStartMatchSwitch(toBoolean(value));
+                case "acceptMatchSwitch" -> settings.getAuto().setAcceptMatchSwitch(toBoolean(value));
+                case "pickChampionSwitch" -> settings.getAuto().setPickChampionSwitch(toBoolean(value));
+                case "banChampionSwitch" -> settings.getAuto().setBanChampionSwitch(toBoolean(value));
+                case "pickChampionSlice" -> {
+                    if (value instanceof List<?> list) {
+                        List<Integer> champions = list.stream()
+                                .filter(item -> item instanceof Number)
+                                .map(item -> ((Number) item).intValue())
+                                .toList();
+                        settings.getAuto().setPickChampionSlice(new ArrayList<>(champions));
+                    }
+                }
+                case "banChampionSlice" -> {
+                    if (value instanceof List<?> list) {
+                        List<Integer> champions = list.stream()
+                                .filter(item -> item instanceof Number)
+                                .map(item -> ((Number) item).intValue())
+                                .toList();
+                        settings.getAuto().setBanChampionSlice(new ArrayList<>(champions));
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean toBoolean(Object value) {
+        if (value instanceof Boolean b) return b;
+        if (value instanceof String s) return Boolean.parseBoolean(s);
+        if (value instanceof Map<?, ?> m && m.containsKey("value")) {
+            return toBoolean(m.get("value"));
+        }
+        return false;
+    }
+}
