@@ -1,8 +1,11 @@
 {
   "bundles": [],
   "resources": [
-    {"pattern": "\\QMETA-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports\\E"},
     {"pattern": "\\Qapplication.yml\\E"},
-    {"pattern": "\\Qapplication.yaml\\E"}
+    {"pattern": "\\Qapplication.yaml\\E"},
+    {"pattern": "\\Qapplication-prod.yml\\E"},
+    {"pattern": "\\Qapplication-dev.yml\\E"},
+    {"pattern": "META-INF/services/.*"},
+    {"pattern": "\\QMETA-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports\\E"}
   ]
 }

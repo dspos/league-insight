@@ -1,616 +1,711 @@
 [
   {
-    "name": "com.ekko.insight.RankAnalysisApplication",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "com.sun.jna.Native",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "com.sun.jna.Platform",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "com.sun.jna.win32.W32APIOptions",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
     "name": "com.ekko.insight.jna.Kernel32",
     "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredMethods": true
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
     "name": "com.ekko.insight.jna.Ntdll",
     "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredMethods": true
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
-    "name": "com.sun.jna.Memory",
+    "name": "com.ekko.insight.jna.ProcessUtils",
     "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredMethods": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.sun.jna.Native",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
     "name": "com.sun.jna.Pointer",
     "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "com.sun.jna.ptr.IntByReference",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
     "name": "com.sun.jna.Structure",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "com.sun.jna.platform.win32.Tlhelp32",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "com.sun.jna.platform.win32.Tlhelp32$PROCESSENTRY32",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
+    "allPublicConstructors": true,
     "allDeclaredMethods": true,
-    "allDeclaredFields": true
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.sun.jna.platform.win32.WinNT",
+    "name": "com.sun.jna.Structure$ByValue",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "com.sun.jna.platform.win32.WinNT$HANDLE",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true,
+    "allPublicConstructors": true,
     "allDeclaredMethods": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "com.sun.jna.platform.win32.WinNT$HANDLE$shared",
-    "allDeclaredConstructors": true,
     "allPublicMethods": true,
-    "allDeclaredFields": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.sun.jna.platform.win32.BaseTSD",
+    "name": "com.sun.jna.Memory",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "com.sun.jna.platform.win32.BaseTSD$SIZE_T",
-    "allDeclaredConstructors": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "com.sun.jna.platform.win32.Kernel32",
-    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredMethods": true
-  },
-  {
-    "name": "com.sun.jna.platform.win32.Kernel32$HANDLE",
-    "allDeclaredConstructors": true,
-    "allDeclaredFields": true
-  },
-  {
-    "name": "com.sun.jna.ptr.PointerByReference",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "com.sun.jna.WString",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "com.sun.jna.Library",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
     "name": "com.sun.jna.Callback",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "org.java_websocket.client.WebSocketClient",
-    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredMethods": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.WebSocketImpl",
+    "name": "com.sun.jna.CallbackReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "org.java_websocket.WebSocketAdapter",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "org.java_websocket.client.WebSocketClient$1",
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "org.java_websocket.handshake.ServerHandshake",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "org.java_websocket.handshake.ServerHandshakeBuilder",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.OkHttpClient",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.OkHttpClient$Builder",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Request",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Request$Builder",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Response",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Call",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.RealCall",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.ConnectionPool",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.ConnectionSpec",
-    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredFields": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.Protocol",
+    "name": "com.sun.jna.IntegerType",
     "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredFields": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.CipherSuite",
+    "name": "com.sun.jna.NativeLong",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.TlsVersion",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.RequestBody",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.FormBody",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.MediaType",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.MediaType$Companion",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Headers",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Headers$Builder",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Cache",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Dispatcher",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.Dns$Companion",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.EventListener",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.EventListener$Callback",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.internal.connection.RealConnectionPool",
-    "allDeclaredConstructors": true,
-    "allPublicMethods": true
-  },
-  {
-    "name": "okhttp3.internal.platform.Platform",
-    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
     "allPublicMethods": true,
-    "allDeclaredMethods": true
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.platform.Platform$Companion",
+    "name": "com.sun.jna.PointerType",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.platform.Jdk8WithJettyBootPlatform",
+    "name": "com.sun.jna.WString",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.platform.Android10Platform",
+    "name": "com.sun.jna.ptr.PointerByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okio.Buffer",
+    "name": "com.sun.jna.ptr.IntByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okio.BufferedSink",
+    "name": "com.sun.jna.ptr.LongByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okio.BufferedSource",
+    "name": "com.sun.jna.ptr.ByteByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okio.ByteString",
+    "name": "com.sun.jna.ptr.ShortByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okio.Okio",
+    "name": "com.sun.jna.win32.W32APIOptions",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okio.Timeout",
+    "name": "com.sun.jna.win32.W32APITypeMapper",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okio.SegmentedByteString",
+    "name": "com.sun.jna.win32.StdCallLibrary",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "javax.net.ssl.SSLContext",
+    "name": "com.sun.jna.win32.W32APIFunctionMapper",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "javax.net.ssl.SSLContextSpi",
+    "name": "net.java.dev.jna.Platform",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "javax.net.ssl.SSLSocketFactory",
+    "name": "com.sun.jna.platform.win32.Kernel32",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "javax.net.ssl.TrustManager",
+    "name": "com.sun.jna.platform.win32.Tlhelp32",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
-    "name": "javax.net.ssl.TrustManagerFactory",
+    "name": "com.sun.jna.platform.win32.Tlhelp32$PROCESSENTRY32",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "javax.net.ssl.TrustManagerFactorySpi",
+    "name": "com.sun.jna.platform.win32.Tlhelp32$PROCESSENTRY32W",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "javax.net.ssl.X509TrustManager",
+    "name": "com.sun.jna.platform.win32.Tlhelp32$THREADENTRY32",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "javax.net.ssl.X509ExtendedTrustManager",
+    "name": "com.sun.jna.platform.win32.Tlhelp32$MODULEENTRY32",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "java.security.cert.X509Certificate",
+    "name": "com.sun.jna.platform.win32.Tlhelp32$MODULEENTRY32W",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "sun.security.ssl.SSLContextImpl$TLSContext",
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "sun.security.ssl.SSLContextImpl$DefaultSSLContext",
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "sun.security.ssl.TrustManagerFactoryImpl$PKIXFactory",
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "sun.security.ssl.TrustManagerFactoryImpl$SimpleFactory",
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "com.github.benmanes.caffeine.cache.Cache",
+    "name": "com.sun.jna.platform.win32.WinNT",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
-    "name": "com.github.benmanes.caffeine.cache.Caffeine",
+    "name": "com.sun.jna.platform.win32.WinNT$HANDLE",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.github.benmanes.caffeine.cache.Caffeine$AsyncCaffeine",
+    "name": "com.sun.jna.platform.win32.WinNT$HANDLEByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.github.benmanes.caffeine.cache.BoundedLocalCache",
+    "name": "com.sun.jna.platform.win32.WinBase",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
-    "name": "com.github.benmanes.caffeine.cache.BoundedLocalCache$BoundedLocalManualCache",
+    "name": "com.sun.jna.platform.win32.WinBase$FILETIME",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.github.benmanes.caffeine.cache.Expiry",
+    "name": "com.sun.jna.platform.win32.WinBase$SYSTEMTIME",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.github.benmanes.caffeine.cache.Scheduler",
+    "name": "com.sun.jna.platform.win32.WinBase$SECURITY_ATTRIBUTES",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.github.benmanes.caffeine.cache.stats.CacheStats",
+    "name": "com.sun.jna.platform.win32.WinDef",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.ObjectMapper",
+    "name": "com.sun.jna.platform.win32.WinDef$DWORD",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.ObjectReader",
+    "name": "com.sun.jna.platform.win32.WinDef$DWORDByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.ObjectWriter",
+    "name": "com.sun.jna.platform.win32.WinDef$ULONG",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.SerializationConfig",
+    "name": "com.sun.jna.platform.win32.WinDef$ULONGByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.DeserializationConfig",
+    "name": "com.sun.jna.platform.win32.WinDef$LONG",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.JsonNode",
+    "name": "com.sun.jna.platform.win32.WinDef$WORD",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.ObjectNode",
+    "name": "com.sun.jna.platform.win32.WinDef$WORDByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.ArrayNode",
+    "name": "com.sun.jna.platform.win32.WinDef$BYTE",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.TextNode",
+    "name": "com.sun.jna.platform.win32.WinDef$BOOL",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.IntNode",
+    "name": "com.sun.jna.platform.win32.WinDef$BOOLByReference",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.LongNode",
+    "name": "com.sun.jna.platform.win32.WinDef$HMODULE",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.BooleanNode",
+    "name": "com.sun.jna.platform.win32.WinDef$HWND",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.NullNode",
+    "name": "com.sun.jna.platform.win32.WinDef$LPARAM",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.databind.node.JsonNodeFactory",
+    "name": "com.sun.jna.platform.win32.WinDef$WPARAM",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.dataformat.yaml.YAMLFactory",
+    "name": "com.sun.jna.platform.win32.WinDef$LRESULT",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.dataformat.yaml.YAMLParser",
+    "name": "com.sun.jna.platform.win32.WinDef$RECT",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "com.fasterxml.jackson.dataformat.yaml.YAMLGenerator",
+    "name": "com.sun.jna.platform.win32.WinDef$POINT",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.ResponseBody",
+    "name": "com.sun.jna.platform.win32.WinDef$SIZE",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.ResponseBody$Companion",
+    "name": "com.sun.jna.platform.win32.WinDef$ATOM",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.http1.Http1ExchangeCodec",
+    "name": "com.sun.jna.platform.win32.WinDef$HCURSOR",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.http2.Http2ExchangeCodec",
+    "name": "com.sun.jna.platform.win32.WinDef$HICON",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.connection.RealConnection",
+    "name": "com.sun.jna.platform.win32.WinDef$HINSTANCE",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.connection.Exchange",
+    "name": "com.sun.jna.platform.win32.WinDef$HMENU",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "okhttp3.internal.connection.ExchangeCodec",
+    "name": "com.sun.jna.platform.win32.WinDef$HRGN",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.drafts.Draft",
+    "name": "com.sun.jna.platform.win32.BaseTSD",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
-    "name": "org.java_websocket.drafts.Draft_6455",
+    "name": "com.sun.jna.platform.win32.BaseTSD$ULONG_PTR",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.handshake.Handshakedata",
+    "name": "com.sun.jna.platform.win32.BaseTSD$LONG_PTR",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.handshake.HandshakedataImpl",
+    "name": "com.sun.jna.platform.win32.BaseTSD$DWORD_PTR",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.framing.Framedata",
+    "name": "com.sun.jna.platform.win32.BaseTSD$UINT_PTR",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.framing.FramedataImpl1",
+    "name": "com.sun.jna.platform.win32.BaseTSD$SIZE_T",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.framing.TextFrame",
+    "name": "com.sun.jna.platform.win32.BaseTSD$SSIZE_T",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.framing.BinaryFrame",
+    "name": "com.sun.jna.platform.win32.Psapi",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true
   },
   {
-    "name": "org.java_websocket.framing.CloseFrame",
+    "name": "com.sun.jna.platform.win32.Psapi$PROCESS_MEMORY_COUNTERS",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.framing.PingFrame",
+    "name": "com.sun.jna.platform.win32.Psapi$PERFORMANCE_INFORMATION",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
-    "name": "org.java_websocket.framing.PongFrame",
+    "name": "com.ekko.insight.service.AssetService$Champion",
     "allDeclaredConstructors": true,
-    "allPublicMethods": true
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.ekko.insight.service.AssetService$Item",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.ekko.insight.service.AssetService$Spell",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "com.ekko.insight.service.AssetService$ChampionOption",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   }
 ]
