@@ -89,7 +89,7 @@
 │                                      │ HTTP / WebSocket                     │
 │                                      ▼                                      │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                      Spring Boot 3.2 后端                              │  │
+│  │                      Spring Boot 3.5 后端                              │  │
 │  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
 │  │  │                      Controller 层                               │  │  │
 │  │  │  Summoner / Session / AI / Automation / UserTag / Config / ... │  │  │
@@ -132,7 +132,7 @@
 | -------------------- | ------- | ------------------ |
 | **Java**             | 21      | 支持 Virtual Threads |
 | **GraalVM**          | 21.0.10 | Native Image 编译    |
-| **Spring Boot**      | 3.2.0   | 核心框架               |
+| **Spring Boot**      | 3.5.11  | 核心框架               |
 | **Spring WebSocket** | -       | WebSocket 支持       |
 | **OkHttp**           | 4.12.0  | HTTP 客户端           |
 | **Java-WebSocket**   | 1.5.5   | WebSocket 客户端      |
