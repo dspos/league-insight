@@ -22,13 +22,18 @@ app:
   settings:
     auto:
       start-match-switch: false
+      start-match-delay: 0
       accept-match-switch: false
+      accept-match-delay: 0
       pick-champion-switch: false
       ban-champion-switch: false
       pick-champion-slice: []
       ban-champion-slice: []
     ai:
       enabled: true
+      api-key: "your api key"
+      endpoint: "your endpoint"
+      model: "your model"
 
 # 日志配置
 logging:

@@ -87,6 +87,19 @@
       <div v-if="sessionSummoner.meetGames?.length" class="meet-indicator">
         <span class="meet-icon" :title="`曾经遇见过 ${sessionSummoner.meetGames.length} 次`">⚠</span>
       </div>
+
+      <!-- AI 分析按钮 -->
+      <div class="ai-action">
+        <button
+          class="ai-analyze-btn"
+          :disabled="isAnalyzing"
+          @click="handleAnalyzeSession"
+          title="AI 分析此玩家"
+        >
+          <span v-if="isAnalyzing" class="loading-spinner small"></span>
+          <span v-else>🤖</span>
+        </button>
+      </div>
     </div>
 
     <!-- 空状态 -->
@@ -97,8 +110,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { SessionSummoner, MatchHistory } from '@/types/api'
+import { computed, ref } from 'vue'
+import { apiClient } from '@/api/httpClient'
+import type { SessionSummoner, MatchHistory, AIAnalysisResult } from '@/types/api'
 
 const props = defineProps<{
   sessionSummoner: SessionSummoner
@@ -107,7 +121,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   navigateToPlayer: [gameName: string, tagLine: string]
+  analyzeResult: [result: AIAnalysisResult, playerGameName: string]
 }>()
+
+// AI 分析状态
+const isAnalyzing = ref(false)
 
 // 队伍样式类
 const teamClass = computed(() => ({
@@ -191,6 +209,23 @@ function onNameClick() {
   const tag = props.sessionSummoner.summoner?.tagLine
   if (name && tag) {
     emit('navigateToPlayer', name, tag)
+  }
+}
+
+// AI 分析会话数据
+async function handleAnalyzeSession() {
+  if (isAnalyzing.value) return
+
+  isAnalyzing.value = true
+  try {
+    // 使用 player 模式分析单个玩家
+    const result = await apiClient.analyzeSession('player')
+    const gameName = props.sessionSummoner.summoner?.gameName || '未知玩家'
+    emit('analyzeResult', result, gameName)
+  } catch (error) {
+    console.error('AI 分析失败:', error)
+  } finally {
+    isAnalyzing.value = false
   }
 }
 
@@ -560,6 +595,47 @@ function getTierCn(tier: string): string {
   font-size: 18px;
   cursor: help;
   filter: drop-shadow(0 0 4px rgba(242, 191, 99, 0.5));
+}
+
+/* AI 分析按钮 */
+.ai-action {
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.ai-analyze-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary, rgba(255,255,255,0.05));
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.ai-analyze-btn:hover:not(:disabled) {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.ai-analyze-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading-spinner.small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 /* 空状态 */

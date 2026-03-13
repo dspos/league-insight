@@ -6,40 +6,45 @@
 
 本项目采用 **Java + Electron** 技术栈，后端使用 Spring Boot 3.x，前端使用 Vue 3 + TypeScript。
 
----
+***
 
 ## 功能特性
 
 ### 📊 战绩查询
+
 - **高低胜率高亮**：直观展示队友近期表现
 - **MVP 显示**：快速识别大腿玩家
 - **玩家标签**：自动标记连胜、连败、非排位玩家等
 - **关系显示**：识别宿敌与好友
 
 ### 🔍 对局分析
+
 - **预组队检测**：标记预先组队的玩家（开黑检测）
 - **历史遭遇**：标记曾经遇见过的玩家
 - **单场详情面板**：展示 10 名玩家的 KDA、经济、补刀、承伤、推塔、装备、技能与符文
 - **海克斯强化识别**：竞技场等特殊队列自动切换为强化展示，区分不同稀有度
 
 ### 🎮 游戏进行中
+
 - **实时玩家信息**：游戏开始后查看双方 10 名玩家完整信息
 - **段位展示**：单排/灵活组排段位一目了然
 - **近期战绩**：每位玩家近期对局快速预览
 - **预组队标记**：自动识别开黑队伍
 
 ### 🤖 AI 分析
+
 - **房间级 AI 判断**：在组队/排队阶段快速给出队友与对手的风险判断
 - **整局 AI 复盘**：对局详情中一键生成整场胜负归因
 - **单人 AI 复盘**：对任意参战玩家单独分析，判断其表现类型
 - **数据证据驱动**：AI 结论结合 KDA、伤害占比、承伤占比、经济、参团率等数据生成
 
 ### ⚙️ 自动化辅助
+
 - **自动匹配**：自动开始寻找对局
 - **自动接受**：匹配成功后自动接受
 - **自动 BP**：自动选择和禁用预设英雄
 
----
+***
 
 ## 目录
 
@@ -55,7 +60,7 @@
 10. [构建与部署](#构建与部署)
 11. [开发指南](#开发指南)
 
----
+***
 
 ## 系统架构
 
@@ -117,39 +122,39 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+***
 
 ## 技术栈
 
 ### 后端技术栈
 
-| 技术 | 版本 | 说明 |
-|-----|------|-----|
-| **Java** | 21 | 支持 Virtual Threads |
-| **GraalVM** | 21.0.10 | Native Image 编译 |
-| **Spring Boot** | 3.2.0 | 核心框架 |
-| **Spring WebSocket** | - | WebSocket 支持 |
-| **OkHttp** | 4.12.0 | HTTP 客户端 |
-| **Java-WebSocket** | 1.5.5 | WebSocket 客户端 |
-| **Caffeine** | 3.1.8 | 高性能缓存 |
-| **JNA** | 5.14.0 | Windows 进程 API 调用 |
-| **Lombok** | - | 代码简化 |
-| **Jackson** | - | JSON/YAML 序列化 |
+| 技术                   | 版本      | 说明                 |
+| -------------------- | ------- | ------------------ |
+| **Java**             | 21      | 支持 Virtual Threads |
+| **GraalVM**          | 21.0.10 | Native Image 编译    |
+| **Spring Boot**      | 3.2.0   | 核心框架               |
+| **Spring WebSocket** | -       | WebSocket 支持       |
+| **OkHttp**           | 4.12.0  | HTTP 客户端           |
+| **Java-WebSocket**   | 1.5.5   | WebSocket 客户端      |
+| **Caffeine**         | 3.1.8   | 高性能缓存              |
+| **JNA**              | 5.14.0  | Windows 进程 API 调用  |
+| **Lombok**           | -       | 代码简化               |
+| **Jackson**          | -       | JSON/YAML 序列化      |
 
 ### 前端技术栈
 
-| 技术                   | 版本     | 说明            |
-|----------------------|--------|---------------|
-| **Electron**         | 28.0.0 | 桌面应用框架        |
-| **Vue**              | 3.3.11 | 前端框架          |
-| **TypeScript**       | 5.3.3  | 类型支持          |
-| **Vite**             | 5.0.8  | 构建工具          |
-| **Pinia**            | 2.1.7  | 状态管理          |
-| **Vue Router**       | 4.2.5  | 路由管理          |
-| **Axios**            | 1.6.2  | HTTP 客户端      |
-| **STOMP.js**         | -      | WebSocket 客户端 |
+| 技术             | 版本     | 说明            |
+| -------------- | ------ | ------------- |
+| **Electron**   | 28.0.0 | 桌面应用框架        |
+| **Vue**        | 3.3.11 | 前端框架          |
+| **TypeScript** | 5.3.3  | 类型支持          |
+| **Vite**       | 5.0.8  | 构建工具          |
+| **Pinia**      | 2.1.7  | 状态管理          |
+| **Vue Router** | 4.2.5  | 路由管理          |
+| **Axios**      | 1.6.2  | HTTP 客户端      |
+| **STOMP.js**   | -      | WebSocket 客户端 |
 
----
+***
 
 ## 项目结构
 
@@ -280,7 +285,7 @@ league-insight-fronted/
 └── vite.config.ts                       # Vite 配置
 ```
 
----
+***
 
 ## 核心模块
 
@@ -331,6 +336,7 @@ public class LcuWebSocketClient {
 ```
 
 **监听的主要事件：**
+
 - `/lol-gameflow/v1/gameflow-phase` - 游戏阶段变化
 - `/lol-champ-select/v1/session` - 选人会话变化
 - `/lol-lobby/v2/lobby` - 大厅变化
@@ -342,17 +348,23 @@ public class LcuWebSocketClient {
 ```java
 @Service
 public class AiAnalysisService {
-    // 分析对局详情
+    // 分析对局详情（赛后复盘）
     public AIAnalysisResult analyzeGameDetail(Long gameId, String mode, Integer participantId);
 
-    // 分析房间级数据
+    // 分析房间会话数据（组队阶段）
     public AIAnalysisResult analyzeSessionData(SessionData sessionData, String mode);
 }
 ```
 
-**分析模式：**
+**对局分析模式：**
+
 - `overview` - 整局总览：分析尽力榜、犯罪榜、被爆、被连累
 - `player` - 单人复盘：判断尽力/犯罪/被爆/被连累/正常发挥
+
+**房间分析模式：**
+
+- `team` - 队伍分析：分析双方阵容特点和可能的优势方
+- `player` - 单人分析：分析当前房间中玩家的实力分布
 
 ### 3. 自动化模块
 
@@ -370,14 +382,15 @@ public class AiAnalysisService {
 根据玩家战绩自动生成标签：
 
 **默认标签规则：**
-| 标签 | 条件 |
-|-----|------|
-| 连胜王 | 5连胜以上 |
-| 连胜中 | 3连胜以上 |
-| 连败中 | 5连败以上 |
-| 运势不佳 | 3连败以上 |
-| 大乱斗玩家 | 近期 70% 以上是大乱斗 |
-| 高手玩家 | 胜率≥60% 且 KDA≥3.0 |
+
+| 标签    | 条件               |
+|-------|------------------|
+| 连胜王   | 5连胜以上            |
+| 连胜中   | 3连胜以上            |
+| 连败中   | 5连败以上            |
+| 运势不佳  | 3连败以上            |
+| 大乱斗玩家 | 近期 70% 以上是大乱斗    |
+| 高手玩家  | 胜率≥60% 且 KDA≥3.0 |
 
 ### 5. 会话数据模块
 
@@ -394,7 +407,7 @@ public class SessionData {
 }
 ```
 
----
+***
 
 ## API 文档
 
@@ -419,26 +432,28 @@ http://127.0.0.1:8080/api/v1
 
 ### 会话 API
 
-| 方法   | 端点                            | 说明             |
-|------|-------------------------------|----------------|
-| GET  | `/session/game-state`         | 获取游戏状态         |
-| GET  | `/session/phase`              | 获取游戏阶段         |
-| GET  | `/session/data`               | 获取完整会话数据（10名玩家）|
-| GET  | `/session/lobby`              | 获取大厅信息         |
-| GET  | `/session/champion-select`    | 获取选人会话         |
-| POST | `/session/matchmaking/start`  | 开始匹配           |
-| POST | `/session/matchmaking/cancel` | 取消匹配           |
-| POST | `/session/accept`             | 接受对局           |
-| GET  | `/session/connected`          | 检查连接状态         |
+| 方法   | 端点                            | 说明              |
+|------|-------------------------------|-----------------|
+| GET  | `/session/game-state`         | 获取游戏状态          |
+| GET  | `/session/phase`              | 获取游戏阶段          |
+| GET  | `/session/data`               | 获取完整会话数据（10名玩家） |
+| GET  | `/session/lobby`              | 获取大厅信息          |
+| GET  | `/session/champion-select`    | 获取选人会话          |
+| POST | `/session/matchmaking/start`  | 开始匹配            |
+| POST | `/session/matchmaking/cancel` | 取消匹配            |
+| POST | `/session/accept`             | 接受对局            |
+| GET  | `/session/connected`          | 检查连接状态          |
 
 ### AI 分析 API
 
-| 方法   | 端点                | 说明       |
-|------|-------------------|----------|
-| POST | `/ai/analyze`     | AI 分析对局 |
-| DELETE | `/ai/cache`     | 清除分析缓存  |
+| 方法     | 端点                    | 说明                |
+|--------|-----------------------|-------------------|
+| POST   | `/ai/analyze`         | AI 分析对局详情         |
+| POST   | `/ai/analyze-session` | AI 分析房间会话数据（组队阶段） |
+| DELETE | `/ai/cache`           | 清除分析缓存            |
 
-**分析请求：**
+**分析对局请求：**
+
 ```json
 {
   "gameId": 123456,
@@ -446,6 +461,13 @@ http://127.0.0.1:8080/api/v1
   "participantId": 1   // 单人模式时使用
 }
 ```
+
+**分析房间请求参数：**
+
+| 参数           | 类型     | 默认值  | 说明                           |
+|--------------|--------|------|------------------------------|
+| analysisMode | string | team | 分析模式：team（队伍分析）、player（单人分析） |
+| queueMode    | int    | -    | 队列模式（可选）                     |
 
 ### 自动化 API
 
@@ -488,7 +510,7 @@ http://127.0.0.1:8080/api/v1
 | GET | `/config/champions`  | 获取英雄列表   |
 | GET | `/config/game-modes` | 获取游戏模式列表 |
 
----
+***
 
 ## 数据模型
 
@@ -573,7 +595,7 @@ interface Summoner {
 }
 ```
 
----
+***
 
 ## AI 功能配置
 
@@ -583,18 +605,18 @@ interface Summoner {
 app:
   settings:
     ai:
-      enabled: true                                              # 开启 AI 功能
-      endpoint: https://ai.nuliyangguang.top                    # AI API 端点
-      model: qwen-turbo                                          # 模型名称
-      apiKey: your-api-key                                       # API Key（可选）
+      enabled: true                                                                   # 开启 AI 功能
+      endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1                     # AI API 端点
+      model: qwen1.5-110b-chat                                                        # 模型名称
+      apiKey: your-api-key                                                            # API Key（可选）
 ```
 
 ### 默认配置
 
-| 配置项 | 默认值 |
-|-------|-------|
-| endpoint | `https://ai.nuliyangguang.top` |
-| model | `qwen-turbo` |
+| 配置项      | 默认值                                                 |
+|----------|-----------------------------------------------------|
+| endpoint | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| model    | `qwen1.5-110b-chat`                                 |
 
 ### API 请求格式
 
@@ -628,7 +650,7 @@ app:
 - 红方下路组合发育不良，伤害占比仅 18%
 ```
 
----
+***
 
 ## 自动化功能
 
@@ -664,9 +686,11 @@ app:
       banChampionSwitch: true       # 启用自动禁人
       pickChampionSlice: [157, 92]  # 优先选择的英雄 ID
       banChampionSlice: [238, 555]  # 优先禁用的英雄 ID
+      startMatchDelay: 3s           # 自动匹配延迟时间（0-10秒）
+      acceptMatchDelay: 2s          # 自动接受延迟时间（0-10秒）
 ```
 
----
+***
 
 ## 用户标签系统
 
@@ -712,18 +736,18 @@ TagCondition (条件树)
 | MinRefresh     | 最小值   |
 | StreakRefresh  | 连胜/连败 |
 
----
+***
 
 ## 构建与部署
 
 ### 环境要求
 
-| 工具 | 版本 | 说明 |
-|-----|------|-----|
-| **GraalVM JDK 21** | 21.0.10+ | 用于 Native Image 编译 |
-| **Visual Studio Build Tools** | 2022+ | Windows 编译工具（需安装 C++ 桌面开发工作负载） |
-| **Node.js** | 18+ | 前端构建 |
-| **Maven** | 3.9+ | 后端构建 |
+| 工具                            | 版本       | 说明                             |
+|-------------------------------|----------|--------------------------------|
+| **GraalVM JDK 21**            | 21.0.10+ | 用于 Native Image 编译             |
+| **Visual Studio Build Tools** | 2022+    | Windows 编译工具（需安装 C++ 桌面开发工作负载） |
+| **Node.js**                   | 18+      | 前端构建                           |
+| **Maven**                     | 3.9+     | 后端构建                           |
 
 ### 一键构建
 
@@ -733,6 +757,7 @@ build.bat
 ```
 
 该脚本会自动完成：
+
 1. 检查环境（GraalVM、Maven、Node.js）
 2. 初始化 MSVC 编译环境
 3. 编译 Native Image 后端
@@ -802,16 +827,17 @@ release/
 
 ### Native Image 优势
 
-| 特性 | Native Image | JAR 包 |
-|-----|-------------|-------|
-| 启动时间 | ~0.5 秒 | ~3 秒 |
-| 内存占用 | 更低 | 较高 |
-| 依赖 | 无需 JRE | 需要 JRE 21 |
-| 后端大小 | ~50MB | ~29MB JAR + JRE |
+| 特性   | Native Image | JAR 包            |
+|------|--------------|------------------|
+| 启动时间 | \~0.5 秒      | \~3 秒            |
+| 内存占用 | 更低           | 较高               |
+| 依赖   | 无需 JRE       | 需要 JRE 21        |
+| 后端大小 | \~50MB       | \~29MB JAR + JRE |
 
 ### GraalVM 配置
 
 Native Image 相关配置位于：
+
 - `pom.xml` - native profile 配置
 - `src/main/resources/META-INF/native-image/native-image.properties` - GraalVM 配置
 
@@ -824,24 +850,25 @@ Native Image 相关配置位于：
 **Q: 端口被占用导致测试失败？**
 
 关闭占用 8080 端口的进程后重试：
+
 ```bash
 netstat -ano | findstr :8080
 taskkill /F /PID <PID>
 ```
 
----
+***
 
 ## 开发指南
 
 ### 环境要求
 
-| 工具 | 版本 | 说明 |
-|-----|------|-----|
-| **GraalVM JDK 21** | 21.0.10+ | 用于 Native Image 编译 |
-| **Visual Studio Build Tools** | 2022+ | Windows 编译工具 |
-| **Node.js** | 18+ | 前端构建 |
-| **Maven** | 3.9+ | 后端构建 |
-| **Windows** | 10/11 | 仅支持 Windows |
+| 工具                            | 版本       | 说明                 |
+|-------------------------------|----------|--------------------|
+| **GraalVM JDK 21**            | 21.0.10+ | 用于 Native Image 编译 |
+| **Visual Studio Build Tools** | 2022+    | Windows 编译工具       |
+| **Node.js**                   | 18+      | 前端构建               |
+| **Maven**                     | 3.9+     | 后端构建               |
+| **Windows**                   | 10/11    | 仅支持 Windows        |
 
 ### 本地开发
 
@@ -850,7 +877,6 @@ taskkill /F /PID <PID>
    cd league-insight-backend
    mvn spring-boot:run
    ```
-
 2. **启动前端**
    ```bash
    cd league-insight-fronted
@@ -864,7 +890,7 @@ taskkill /F /PID <PID>
 - API 响应使用标准 JSON 格式
 - 日志级别：生产 INFO，开发 DEBUG
 
----
+***
 
 ## 常见问题
 
@@ -892,23 +918,24 @@ taskkill /F /PID <PID>
 2. 点击刷新按钮重新获取
 3. 检查后端日志确认 API 调用是否成功
 
----
+***
 
 ## 版本历史
 
-| 版本 | 日期 | 更新内容 |
-|-----|------|---------|
-| 1.0.0 | 2026-03 | 初始版本 |
-| 1.1.0 | 2026-03 | 新增 AI 分析功能、游戏进行中页面、海克斯强化识别 |
+| 版本    | 日期      | 更新内容                                   |
+|-------|---------|----------------------------------------|
+| 1.0.0 | 2026-03 | 初始版本                                   |
+| 1.1.0 | 2026-03 | 新增 AI 分析功能、游戏进行中页面、海克斯强化识别             |
 | 1.2.0 | 2026-03 | 改用 GraalVM Native Image 编译，无需 JRE 独立运行 |
+| 1.3.0 | 2026-03 | 新增 AI 房间分析功能、自动化延迟时间配置、优化 LCU 连接监控     |
 
----
+***
 
 ## 许可证
 
 MIT License
 
----
+***
 
 ## 作者
 

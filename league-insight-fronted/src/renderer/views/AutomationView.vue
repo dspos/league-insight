@@ -16,9 +16,16 @@ const editType = ref<'pick' | 'ban'>('pick')
 const searchQuery = ref('')
 const selectedChampions = ref<number[]>([])
 
+// 延迟时间输入
+const matchDelayInput = ref(0)
+const acceptDelayInput = ref(0)
+
 onMounted(async () => {
   await automationStore.init()
   await loadChampions()
+  // 同步延迟时间输入
+  matchDelayInput.value = automationStore.autoMatchDelay
+  acceptDelayInput.value = automationStore.autoAcceptDelay
 })
 
 // 加载英雄列表
@@ -107,20 +114,43 @@ function getChampionName(id: number): string {
   return champion?.label || String(id)
 }
 
+// 更新延迟时间
+async function updateMatchDelay() {
+  const delay = Math.max(0, Math.min(10, matchDelayInput.value))
+  matchDelayInput.value = delay
+  await automationStore.updateAutoMatchDelay(delay)
+}
+
+async function updateAcceptDelay() {
+  const delay = Math.max(0, Math.min(10, acceptDelayInput.value))
+  acceptDelayInput.value = delay
+  await automationStore.updateAutoAcceptDelay(delay)
+}
+
 const toggleItems = [
   {
     key: 'autoMatch',
     label: '自动开始匹配',
     description: '在大厅时自动开始匹配，取消匹配后自动禁用',
     value: automationStore.autoMatch,
-    toggle: () => automationStore.setAutoMatch(!automationStore.autoMatch)
+    toggle: () => automationStore.setAutoMatch(!automationStore.autoMatch),
+    delayValue: matchDelayInput,
+    delayKey: 'matchDelay',
+    delayLabel: '延迟时间',
+    delayUnit: '秒',
+    onDelayChange: updateMatchDelay
   },
   {
     key: 'autoAccept',
     label: '自动接受对局',
     description: '匹配成功后自动接受',
     value: automationStore.autoAccept,
-    toggle: () => automationStore.setAutoAccept(!automationStore.autoAccept)
+    toggle: () => automationStore.setAutoAccept(!automationStore.autoAccept),
+    delayValue: acceptDelayInput,
+    delayKey: 'acceptDelay',
+    delayLabel: '延迟时间',
+    delayUnit: '秒',
+    onDelayChange: updateAcceptDelay
   },
   {
     key: 'autoPick',
@@ -154,19 +184,35 @@ const toggleItems = [
           v-for="item in toggleItems"
           :key="item.key"
           class="toggle-item"
+          :class="{ 'has-delay': item.delayKey }"
         >
           <div class="toggle-info">
             <span class="toggle-label">{{ item.label }}</span>
             <span class="toggle-desc">{{ item.description }}</span>
           </div>
-          <label class="toggle-switch">
-            <input
-              type="checkbox"
-              :checked="item.value"
-              @change="item.toggle"
-            />
-            <span class="slider"></span>
-          </label>
+          <div class="toggle-controls">
+            <!-- 延迟时间输入 -->
+            <div v-if="item.delayKey" class="delay-input-group">
+              <label class="delay-label">{{ item.delayLabel }}</label>
+              <input
+                type="number"
+                v-model.number="item.delayValue.value"
+                @change="item.onDelayChange"
+                min="0"
+                max="10"
+                class="delay-input"
+              />
+              <span class="delay-unit">{{ item.delayUnit }}</span>
+            </div>
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                :checked="item.value"
+                @change="item.toggle"
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -220,8 +266,8 @@ const toggleItems = [
     <div class="tips-section">
       <h2>使用说明</h2>
       <ul class="tips-list">
-        <li>自动匹配：在大厅时自动开始匹配，手动取消匹配后会自动禁用</li>
-        <li>自动接受：匹配成功后自动点击接受按钮</li>
+        <li>自动匹配：在大厅时自动开始匹配，手动取消匹配后会自动禁用。可设置延迟时间（0-10秒）</li>
+        <li>自动接受：匹配成功后自动点击接受按钮。可设置延迟时间（0-10秒）</li>
         <li>自动选人：轮到你选择时自动选择预设英雄，会跳过已被选择/禁用的英雄</li>
         <li>自动禁人：轮到你禁人时自动禁用预设英雄，不会禁用队友预选的英雄</li>
       </ul>
@@ -348,6 +394,49 @@ const toggleItems = [
   padding: 16px;
   background: var(--bg-secondary);
   border-radius: 10px;
+}
+
+.toggle-item.has-delay {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toggle-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.delay-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delay-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.delay-input {
+  width: 60px;
+  padding: 6px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.delay-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.delay-unit {
+  font-size: 12px;
+  color: var(--text-tertiary);
 }
 
 .toggle-info {

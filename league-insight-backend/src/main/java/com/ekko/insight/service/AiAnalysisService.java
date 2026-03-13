@@ -30,7 +30,7 @@ public class AiAnalysisService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .build();
 
@@ -40,8 +40,9 @@ public class AiAnalysisService {
             .expireAfterWrite(30, TimeUnit.MINUTES)
             .build();
 
-    private static final String DEFAULT_AI_ENDPOINT = "https://ai.nuliyangguang.top";
-    private static final String DEFAULT_MODEL = "qwen-turbo";
+    private static final String DEFAULT_AI_ENDPOINT = "your endpoint";
+    private static final String DEFAULT_MODEL = "your model";
+    private static final String DEFAULT_API_KEY = "your api key";
     private static final String SYSTEM_PROMPT = "你是一个LOL游戏分析师，擅长分析玩家战绩和给出游戏建议。请用简洁、专业、直接的中文回复。所有结论都必须绑定数据证据，避免空泛。";
 
     /**
@@ -129,6 +130,11 @@ public class AiAnalysisService {
      * 调用 AI API
      */
     private String callAiApi(String prompt) throws IOException {
+        String apiKey = appConfig.getSettings().getAi().getApiKey();
+        if (apiKey == null || apiKey.isEmpty() || "your-api-key-here".equals(apiKey)) {
+            apiKey = DEFAULT_API_KEY;
+        }
+
         String endpoint = appConfig.getSettings().getAi().getEndpoint();
         if (endpoint == null || endpoint.isEmpty()) {
             endpoint = DEFAULT_AI_ENDPOINT;
@@ -138,6 +144,8 @@ public class AiAnalysisService {
         if (model == null || model.isEmpty()) {
             model = DEFAULT_MODEL;
         }
+
+        log.info("调用 AI API: endpoint={}, model={}", endpoint, model);
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", model);
@@ -150,12 +158,19 @@ public class AiAnalysisService {
 
         Request request = new Request.Builder()
                 .url(endpoint)
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
                 .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
                 .build();
 
+        long startTime = System.currentTimeMillis();
         try (Response response = httpClient.newCall(request).execute()) {
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.info("AI API 响应: code={}, elapsed={}ms", response.code(), elapsed);
+
             if (!response.isSuccessful()) {
-                log.error("AI API 调用失败: {}", response.code());
+                String errorBody = response.body() != null ? response.body().string() : "无响应体";
+                log.error("AI API 调用失败: code={}, body={}", response.code(), errorBody);
                 return null;
             }
 
@@ -209,7 +224,7 @@ public class AiAnalysisService {
 - "被连累"只给在败方里数据明显完成职责、但团队整体明显失衡的人。
 - "被爆"优先看高死亡、低经济占比、低输出占比、低参团，或者同队里明显拖后腿。
 - 允许结论为"无人明显犯罪"或"多人都尽力"。
-- 语气直接，但不要人身攻击。
+- 语气直接，纯锐评，突出一针见血。
 
 【对局信息】
 队列ID：%d
@@ -262,7 +277,7 @@ public class AiAnalysisService {
         Map<String, Object> targetPlayer = players.stream()
                 .filter(p -> participantId.equals(((Number) p.get("participantId")).intValue()))
                 .findFirst()
-                .orElse(players.get(0));
+                .orElse(players.getFirst());
 
         List<Map<String, Object>> sameTeamPlayers = players.stream()
                 .filter(p -> p.get("teamId").equals(targetPlayer.get("teamId")))
@@ -309,7 +324,7 @@ public class AiAnalysisService {
 - 说明是自己打出来的、被针对的、还是被队友带飞/拖累。
 
 ## 一句话锐评
-- 用一句短评收尾，允许直接一点，但不要辱骂。
+- 用一句短评收尾，允许直接一点，纯锐评。
 """.formatted(
                 gameDetail.getGameMode(),
                 gameDetail.getGameDuration() / 60,

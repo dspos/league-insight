@@ -185,7 +185,9 @@ export interface AppConfig {
   settings: {
     auto: {
       startMatchSwitch: boolean
+      startMatchDelay: number
       acceptMatchSwitch: boolean
+      acceptMatchDelay: number
       pickChampionSwitch: boolean
       banChampionSwitch: boolean
       pickChampionSlice: number[]

@@ -6,7 +6,9 @@ import type { AppConfig } from '@/types/api'
 export const useAutomationStore = defineStore('automation', () => {
   // 状态
   const autoMatch = ref(false)
+  const autoMatchDelay = ref(0)
   const autoAccept = ref(false)
+  const autoAcceptDelay = ref(0)
   const autoPick = ref(false)
   const autoBan = ref(false)
   const pickChampions = ref<number[]>([])
@@ -42,6 +44,8 @@ export const useAutomationStore = defineStore('automation', () => {
     try {
       config.value = await apiClient.getConfig()
       const auto = config.value.settings.auto
+      autoMatchDelay.value = auto.startMatchDelay
+      autoAcceptDelay.value = auto.acceptMatchDelay
       pickChampions.value = auto.pickChampionSlice
       banChampions.value = auto.banChampionSlice
     } catch (error) {
@@ -126,6 +130,30 @@ export const useAutomationStore = defineStore('automation', () => {
   }
 
   /**
+   * 更新自动匹配延迟时间
+   */
+  async function updateAutoMatchDelay(delay: number) {
+    try {
+      await apiClient.setConfig('settings.auto.startMatchDelay', delay)
+      autoMatchDelay.value = delay
+    } catch (error) {
+      console.error('Failed to update auto match delay:', error)
+    }
+  }
+
+  /**
+   * 更新自动接受延迟时间
+   */
+  async function updateAutoAcceptDelay(delay: number) {
+    try {
+      await apiClient.setConfig('settings.auto.acceptMatchDelay', delay)
+      autoAcceptDelay.value = delay
+    } catch (error) {
+      console.error('Failed to update auto accept delay:', error)
+    }
+  }
+
+  /**
    * 初始化
    */
   async function init() {
@@ -135,7 +163,9 @@ export const useAutomationStore = defineStore('automation', () => {
   return {
     // 状态
     autoMatch,
+    autoMatchDelay,
     autoAccept,
+    autoAcceptDelay,
     autoPick,
     autoBan,
     pickChampions,
@@ -154,6 +184,8 @@ export const useAutomationStore = defineStore('automation', () => {
     setAutoBan,
     updatePickChampions,
     updateBanChampions,
+    updateAutoMatchDelay,
+    updateAutoAcceptDelay,
     init
   }
 })

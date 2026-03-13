@@ -16,13 +16,29 @@
           <span class="phase-badge" :class="phaseClass">{{ phaseCn }}</span>
           <span class="queue-name">{{ sessionData.typeCn || '未知模式' }}</span>
         </div>
-        <button class="refresh-btn-small" @click="fetchSessionData" :disabled="loading">
-          <span class="refresh-icon" :class="{ 'spinning': loading }">↻</span>
-          <span>{{ loading ? '刷新中...' : '刷新' }}</span>
-          <span v-if="loading" class="loading-bar">
-            <span class="loading-progress"></span>
-          </span>
-        </button>
+        <div class="header-actions">
+          <button class="ai-btn" @click="analyzeSession('team')" :disabled="isAnalyzing">
+            <span v-if="isAnalyzing" class="loading-spinner small"></span>
+            <span v-else>🤖</span>
+            <span>AI 分析</span>
+          </button>
+          <button class="refresh-btn-small" @click="fetchSessionData" :disabled="loading">
+            <span class="refresh-icon" :class="{ 'spinning': loading }">↻</span>
+            <span>{{ loading ? '刷新中...' : '刷新' }}</span>
+            <span v-if="loading" class="loading-bar">
+              <span class="loading-progress"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- AI 分析结果面板 -->
+      <div v-if="analysisResult" class="analysis-panel">
+        <div class="analysis-header">
+          <span class="analysis-title">🤖 AI 分析结果</span>
+          <button class="close-btn" @click="analysisResult = null">×</button>
+        </div>
+        <div class="analysis-content" v-html="formatAnalysisResult(analysisResult.content)"></div>
       </div>
 
       <!-- 双方队伍 -->
@@ -40,6 +56,7 @@
               :session-summoner="player"
               team="blue"
               @navigate-to-player="handleNavigateToPlayer"
+              @analyze-result="handleAnalyzeResult"
             />
           </div>
         </div>
@@ -75,6 +92,7 @@
                 :session-summoner="player"
                 team="red"
                 @navigate-to-player="handleNavigateToPlayer"
+                @analyze-result="handleAnalyzeResult"
               />
             </div>
           </template>
@@ -88,7 +106,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { apiClient } from '@/api/httpClient'
-import type { SessionData } from '@/types/api'
+import type { SessionData, AIAnalysisResult } from '@/types/api'
 import PlayerCard from '@/components/gaming/PlayerCard.vue'
 
 const router = useRouter()
@@ -104,6 +122,8 @@ const sessionData = ref<SessionData>({
 })
 
 const loading = ref(false)
+const isAnalyzing = ref(false)
+const analysisResult = ref<AIAnalysisResult | null>(null)
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 // 阶段中文
@@ -149,6 +169,41 @@ function handleNavigateToPlayer(gameName: string, tagLine: string) {
     path: '/summoner',
     query: { name: `${gameName}#${tagLine}` }
   })
+}
+
+// AI 分析会话
+async function analyzeSession(mode: string = 'team') {
+  if (isAnalyzing.value) return
+
+  isAnalyzing.value = true
+  try {
+    const result = await apiClient.analyzeSession(mode, sessionData.value.queueId || undefined)
+    analysisResult.value = result
+  } catch (error) {
+    console.error('AI 分析失败:', error)
+    analysisResult.value = {
+      success: false,
+      content: '分析失败，请稍后重试',
+      error: String(error)
+    }
+  } finally {
+    isAnalyzing.value = false
+  }
+}
+
+// 处理 PlayerCard 发出的分析结果
+function handleAnalyzeResult(result: AIAnalysisResult, playerName: string) {
+  analysisResult.value = result
+}
+
+// 格式化分析结果（支持 Markdown 标题）
+function formatAnalysisResult(content: string): string {
+  if (!content) return ''
+  return content
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
 }
 
 onMounted(() => {
@@ -269,6 +324,115 @@ onUnmounted(() => {
   font-size: 14px;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1));
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 600;
+}
+
+.ai-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2));
+}
+
+.ai-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loading-spinner.small {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* AI 分析结果面板 */
+.analysis-panel {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.analysis-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #a78bfa;
+}
+
+.close-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.analysis-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.analysis-content :deep(h3) {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 12px 0 8px 0;
+}
+
+.analysis-content :deep(h3:first-child) {
+  margin-top: 0;
+}
+
+.analysis-content :deep(li) {
+  margin-left: 16px;
+  color: var(--text-secondary);
+}
+
+.analysis-content :deep(strong) {
+  color: #a78bfa;
 }
 
 .refresh-btn-small {

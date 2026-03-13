@@ -30,10 +30,6 @@ public class TagConfigService {
 
     private List<TagConfig> tagConfigs = new ArrayList<>();
 
-    // 队列 ID 常量
-    private static final int QUEUE_SOLO_5X5 = 420;
-    private static final int QUEUE_FLEX = 440;
-
     @PostConstruct
     public void init() {
         loadConfig();
@@ -69,11 +65,11 @@ public class TagConfigService {
                 continue;
             }
 
-            boolean matched = evaluateCondition(config.getCondition(), matchHistory, puuid, currentMode);
-            log.debug("标签 {} 条件评估结果: {}", config.getId(), matched);
+            EvaluateResult evalResult = evaluateConditionWithResult(config.getCondition(), matchHistory, puuid, currentMode);
+            log.debug("标签 {} 条件评估结果: {}, streakValue: {}", config.getId(), evalResult.matched, evalResult.streakValue);
 
-            if (matched) {
-                String displayName = formatName(config.getName(), matchHistory, puuid);
+            if (evalResult.matched) {
+                String displayName = formatName(config.getName(), evalResult.streakValue);
                 result.add(RankTag.builder()
                         .good(config.getGood())
                         .tagName(displayName)
@@ -83,6 +79,53 @@ public class TagConfigService {
         }
 
         return result;
+    }
+
+    /**
+     * 评估结果（包含连胜/连败次数）
+     */
+    private static class EvaluateResult {
+        boolean matched;
+        int streakValue; // 连胜/连败次数（正数连胜，负数连败）
+
+        EvaluateResult(boolean matched) {
+            this.matched = matched;
+            this.streakValue = 0;
+        }
+
+        EvaluateResult(boolean matched, int streakValue) {
+            this.matched = matched;
+            this.streakValue = streakValue;
+        }
+    }
+
+    /**
+     * 评估条件并返回结果（包含连胜数）
+     */
+    private EvaluateResult evaluateConditionWithResult(TagCondition condition, List<MatchHistory> history,
+                                                        String puuid, Integer currentMode) {
+        if (condition instanceof TagCondition.HistoryCondition hc) {
+            // 应用过滤器
+            List<MatchHistory> filtered = history;
+            for (MatchFilter filter : hc.getFilters()) {
+                filtered = applyFilter(filtered, filter, puuid);
+            }
+
+            // 应用刷新器并获取连胜数
+            if (hc.getRefresh() instanceof MatchRefresh.StreakRefresh sr) {
+                int streak = calculateStreak(filtered, puuid, sr.getKind());
+                boolean matched = streak >= sr.getMin();
+                // 正数表示连胜，负数表示连败
+                int streakValue = sr.getKind() == StreakType.LOSS ? -streak : streak;
+                return new EvaluateResult(matched, streakValue);
+            } else {
+                boolean matched = applyRefresh(hc.getRefresh(), filtered, puuid);
+                return new EvaluateResult(matched);
+            }
+        } else {
+            boolean matched = evaluateCondition(condition, history, puuid, currentMode);
+            return new EvaluateResult(matched);
+        }
     }
 
     // ========== 条件评估 ==========
@@ -285,39 +328,9 @@ public class TagConfigService {
         return streak;
     }
 
-    private int getGlobalStreak(List<MatchHistory> history, String puuid) {
-        int streak = 0;
-        Boolean isWin = null;
-
-        for (MatchHistory game : history) {
-            // 只统计排位
-            if (game.getQueueId() != QUEUE_SOLO_5X5 && game.getQueueId() != QUEUE_FLEX) {
-                continue;
-            }
-
-            MatchHistory.Participant p = findParticipant(game, puuid);
-            if (p == null || p.getStats() == null) continue;
-
-            boolean win = Boolean.TRUE.equals(p.getStats().getWin());
-
-            if (isWin == null) {
-                isWin = win;
-            }
-
-            if (win == isWin) {
-                streak++;
-            } else {
-                break;
-            }
-        }
-
-        return isWin != null && isWin ? streak : -streak;
-    }
-
-    private String formatName(String name, List<MatchHistory> history, String puuid) {
+    private String formatName(String name, int streakValue) {
         if (name != null && name.contains("{N}")) {
-            int streak = getGlobalStreak(history, puuid);
-            String nCn = numberToChinese(Math.abs(streak));
+            String nCn = numberToChinese(Math.abs(streakValue));
             return name.replace("{N}", nCn);
         }
         return name;

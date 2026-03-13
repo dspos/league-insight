@@ -19,6 +19,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,10 +60,11 @@ public class LcuService {
     // 战绩缓存：存储完整的 50 条数据，key 为 puuid
     private final Cache<String, MatchHistory[]> matchHistoryCache = Caffeine.newBuilder()
             .maximumSize(200)
-            .expireAfterWrite(2, TimeUnit.MINUTES)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
 
     private volatile String currentPhase;
+    private ScheduledExecutorService scheduler;
 
     @PostConstruct
     public void init() {
@@ -77,6 +80,9 @@ public class LcuService {
     @PreDestroy
     public void destroy() {
         log.info("关闭 LCU 服务...");
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
         webSocketClient.disconnect();
     }
 
@@ -84,28 +90,20 @@ public class LcuService {
      * 启动连接监控
      */
     private void startConnectionMonitor() {
-        Thread monitorThread = new Thread(() -> {
-            while (true) {
-                try {
-                    boolean wasConnected = webSocketClient.isConnected();
-                    boolean nowConnected = checkAndConnect();
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                boolean wasConnected = webSocketClient.isConnected();
+                boolean nowConnected = checkAndConnect();
 
-                    // 状态变化时推送
-                    if (nowConnected != wasConnected) {
-                        pushGameState(nowConnected);
-                    }
-
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                } catch (Exception e) {
-                    log.error("连接监控错误: {}", e.getMessage());
+                // 状态变化时推送
+                if (nowConnected != wasConnected) {
+                    pushGameState(nowConnected);
                 }
+            } catch (Exception e) {
+                log.error("连接监控错误: {}", e.getMessage());
             }
-        }, "lcu-connection-monitor");
-        monitorThread.setDaemon(true);
-        monitorThread.start();
+        }, 0, 2, TimeUnit.SECONDS);
     }
 
     /**
@@ -301,7 +299,7 @@ public class LcuService {
     public List<MatchHistory> getFilteredMatchHistory(String puuid, int begIndex, int endIndex,
                                                        Integer queueId, Integer championId, int maxResults) {
         // 从缓存获取数据
-        MatchHistory[] allMatches = matchHistoryCache.get(puuid, key -> fetchMatchHistory(key));
+        MatchHistory[] allMatches = matchHistoryCache.get(puuid, this::fetchMatchHistory);
 
         if (allMatches == null || allMatches.length == 0) {
             return List.of();

@@ -89,7 +89,7 @@
   }
 }, {
   "id" : "default_streak_win",
-  "name" : "1连胜",
+  "name" : "{N}连胜",
   "desc" : "最近胜率较高的大腿玩家哦",
   "good" : true,
   "enabled" : true,
@@ -108,7 +108,7 @@
   }
 }, {
   "id" : "default_streak_loss",
-  "name" : "1连败",
+  "name" : "{N}连败",
   "desc" : "最近连败的玩家哦",
   "good" : false,
   "enabled" : true,

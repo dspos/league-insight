@@ -41,9 +41,19 @@ public class AppConfig {
         private boolean startMatchSwitch = false;
 
         /**
+         * 自动开始匹配延迟时间（秒）
+         */
+        private int startMatchDelay = 0;
+
+        /**
          * 自动接受对局
          */
         private boolean acceptMatchSwitch = false;
+
+        /**
+         * 自动接受对局延迟时间（秒）
+         */
+        private int acceptMatchDelay = 0;
 
         /**
          * 自动选择英雄
@@ -95,8 +105,16 @@ public class AppConfig {
         return settings.getAuto().isStartMatchSwitch();
     }
 
+    public int getAutoMatchDelay() {
+        return settings.getAuto().getStartMatchDelay();
+    }
+
     public boolean isAutoAcceptEnabled() {
         return settings.getAuto().isAcceptMatchSwitch();
+    }
+
+    public int getAutoAcceptDelay() {
+        return settings.getAuto().getAcceptMatchDelay();
     }
 
     public boolean isAutoPickEnabled() {
@@ -131,7 +149,9 @@ public class AppConfig {
 
             switch (autoKey) {
                 case "startMatchSwitch" -> settings.getAuto().setStartMatchSwitch(toBoolean(value));
+                case "startMatchDelay" -> settings.getAuto().setStartMatchDelay(clampDelay(toInt(value)));
                 case "acceptMatchSwitch" -> settings.getAuto().setAcceptMatchSwitch(toBoolean(value));
+                case "acceptMatchDelay" -> settings.getAuto().setAcceptMatchDelay(clampDelay(toInt(value)));
                 case "pickChampionSwitch" -> settings.getAuto().setPickChampionSwitch(toBoolean(value));
                 case "banChampionSwitch" -> settings.getAuto().setBanChampionSwitch(toBoolean(value));
                 case "pickChampionSlice" -> {
@@ -163,5 +183,24 @@ public class AppConfig {
             return toBoolean(m.get("value"));
         }
         return false;
+    }
+
+    private int toInt(Object value) {
+        if (value instanceof Number n) return n.intValue();
+        if (value instanceof String s) {
+            try {
+                return Integer.parseInt(s);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        if (value instanceof Map<?, ?> m && m.containsKey("value")) {
+            return toInt(m.get("value"));
+        }
+        return 0;
+    }
+
+    private int clampDelay(int delay) {
+        return Math.max(0, Math.min(10, delay));
     }
 }
