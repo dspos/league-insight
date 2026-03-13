@@ -19,7 +19,7 @@ public class ApiResponse<T> {
     /**
      * 响应码
      * 200: 成功
-     * 其他: 失败
+     * 其他：失败
      */
     private int code;
 
@@ -37,6 +37,38 @@ public class ApiResponse<T> {
      * 时间戳
      */
     private long timestamp;
+
+
+    public static class ApiResponseBuilder<T> {
+        private int code;
+        private String message;
+        private T data;
+        private long timestamp;
+
+        public ApiResponseBuilder<T> code(int code) {
+            this.code = code;
+            return this;
+        }
+
+        public ApiResponseBuilder<T> message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public ApiResponseBuilder<T> data(T data) {
+            this.data = data;
+            return this;
+        }
+
+        public ApiResponseBuilder<T> timestamp(long timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public ApiResponse<T> build() {
+            return new ApiResponse<>(code, message, data, timestamp);
+        }
+    }
 
     /**
      * 成功响应

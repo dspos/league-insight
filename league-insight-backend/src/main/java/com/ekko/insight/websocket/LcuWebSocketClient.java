@@ -1,8 +1,8 @@
 package com.ekko.insight.websocket;
 
+import com.ekko.insight.model.AuthInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ekko.insight.model.AuthInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;

@@ -1,11 +1,7 @@
 package com.ekko.insight.controller;
 
-import com.ekko.insight.model.ApiResponse;
-import com.ekko.insight.model.ChampionSelectSession;
-import com.ekko.insight.model.GameState;
-import com.ekko.insight.model.Lobby;
-import com.ekko.insight.model.SessionData;
-import com.ekko.insight.service.LcuService;
+import com.ekko.insight.model.*;
+import com.ekko.insight.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +14,11 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class SessionController {
 
-    private final LcuService lcuService;
+    private final LcuHttpClient lcuHttpClient;
+    private final GameFlowService gameFlowService;
+    private final ChampionSelectService championSelectService;
+    private final SessionAnalysisService sessionAnalysisService;
+    private final SummonerService summonerService;
 
     /**
      * 获取游戏状态
@@ -28,14 +28,14 @@ public class SessionController {
         GameState state = new GameState();
 
         try {
-            boolean connected = lcuService.checkConnection();
+            boolean connected = lcuHttpClient.isConnected();
             state.setConnected(connected);
 
             if (connected) {
-                String phase = lcuService.getGamePhase();
+                String phase = gameFlowService.getGamePhase();
                 state.setPhase(phase);
 
-                state.setSummoner(lcuService.getMySummoner());
+                state.setSummoner(summonerService.getMySummoner());
             }
         } catch (Exception e) {
             state.setConnected(false);
@@ -49,7 +49,7 @@ public class SessionController {
      */
     @GetMapping("/phase")
     public ApiResponse<String> getGamePhase() {
-        return ApiResponse.success(lcuService.getGamePhase());
+        return ApiResponse.success(gameFlowService.getGamePhase());
     }
 
     /**
@@ -57,7 +57,7 @@ public class SessionController {
      */
     @GetMapping("/lobby")
     public ApiResponse<Lobby> getLobby() {
-        return ApiResponse.success(lcuService.getLobby());
+        return ApiResponse.success(gameFlowService.getLobby());
     }
 
     /**
@@ -65,7 +65,7 @@ public class SessionController {
      */
     @GetMapping("/champion-select")
     public ApiResponse<ChampionSelectSession> getChampionSelectSession() {
-        return ApiResponse.success(lcuService.getChampionSelectSession());
+        return ApiResponse.success(championSelectService.getChampionSelectSession());
     }
 
     /**
@@ -73,7 +73,7 @@ public class SessionController {
      */
     @PostMapping("/matchmaking/start")
     public ApiResponse<Void> startMatchmaking() {
-        lcuService.startMatchmaking();
+        gameFlowService.startMatchmaking();
         return ApiResponse.success();
     }
 
@@ -82,7 +82,7 @@ public class SessionController {
      */
     @PostMapping("/matchmaking/cancel")
     public ApiResponse<Void> cancelMatchmaking() {
-        lcuService.cancelMatchmaking();
+        gameFlowService.cancelMatchmaking();
         return ApiResponse.success();
     }
 
@@ -91,7 +91,7 @@ public class SessionController {
      */
     @PostMapping("/accept")
     public ApiResponse<Void> acceptMatch() {
-        lcuService.acceptMatch();
+        gameFlowService.acceptMatch();
         return ApiResponse.success();
     }
 
@@ -100,7 +100,7 @@ public class SessionController {
      */
     @GetMapping("/connected")
     public ApiResponse<Boolean> isConnected() {
-        return ApiResponse.success(lcuService.checkConnection());
+        return ApiResponse.success(lcuHttpClient.isConnected());
     }
 
     /**
@@ -110,6 +110,6 @@ public class SessionController {
      */
     @GetMapping("/data")
     public ApiResponse<SessionData> getSessionData(@RequestParam(required = false) Integer mode) {
-        return ApiResponse.success(lcuService.getSessionData(mode));
+        return ApiResponse.success(sessionAnalysisService.getSessionData(mode));
     }
 }

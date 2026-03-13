@@ -1,0 +1,14 @@
+{
+  "resources": [
+    {
+      "pattern": "application\\.yml$"
+    },
+    {
+      "pattern": "application\\.yaml$"
+    }
+  ],
+  "reflectAllAccessors": true,
+  "reflectAllDeclaredConstructors": true,
+  "reflectAllDeclaredMethods": true,
+  "reflectAllDeclaredFields": true
+}

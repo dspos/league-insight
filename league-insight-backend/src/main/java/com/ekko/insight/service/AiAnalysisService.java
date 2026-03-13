@@ -1,18 +1,21 @@
 package com.ekko.insight.service;
 
 import com.ekko.insight.config.AppConfig;
-import com.ekko.insight.constant.GameConstants;
-import com.ekko.insight.model.*;
+import com.ekko.insight.model.AIAnalysisResult;
+import com.ekko.insight.model.GameDetail;
+import com.ekko.insight.model.SessionData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -38,6 +41,7 @@ public class AiAnalysisService {
     private final Cache<String, String> analysisCache = Caffeine.newBuilder()
             .maximumSize(100)
             .expireAfterWrite(30, TimeUnit.MINUTES)
+            .recordStats()
             .build();
 
     private static final String DEFAULT_AI_ENDPOINT = "your endpoint";
@@ -370,101 +374,9 @@ public class AiAnalysisService {
      * 构建比赛快照数据
      */
     private Map<String, Object> buildMatchSnapshot(GameDetail gameDetail) {
-        List<Map<String, Object>> players = new ArrayList<>();
-        Map<Integer, Map<String, Long>> teamTotals = new HashMap<>();
-
-        // 计算队伍总和
-        for (GameDetail.GameParticipant participant : gameDetail.getParticipants()) {
-            int teamId = participant.getTeamId();
-            Map<String, Long> totals = teamTotals.computeIfAbsent(teamId, k -> new HashMap<>());
-            GameDetail.Stats stats = participant.getStats();
-
-            totals.merge("damage", stats.getTotalDamageDealtToChampions() != null ? stats.getTotalDamageDealtToChampions() : 0L, Long::sum);
-            totals.merge("taken", stats.getTotalDamageTaken() != null ? stats.getTotalDamageTaken() : 0L, Long::sum);
-            totals.merge("gold", stats.getGoldEarned() != null ? stats.getGoldEarned() : 0L, Long::sum);
-            totals.merge("kills", stats.getKills() != null ? stats.getKills().longValue() : 0L, Long::sum);
-        }
-
-        // 构建玩家数据
-        for (GameDetail.GameParticipant participant : gameDetail.getParticipants()) {
-            GameDetail.Stats stats = participant.getStats();
-            Map<String, Long> totals = teamTotals.getOrDefault(participant.getTeamId(), new HashMap<>());
-
-            long damage = stats.getTotalDamageDealtToChampions() != null ? stats.getTotalDamageDealtToChampions() : 0;
-            long taken = stats.getTotalDamageTaken() != null ? stats.getTotalDamageTaken() : 0;
-            long gold = stats.getGoldEarned() != null ? stats.getGoldEarned() : 0;
-            int kills = stats.getKills() != null ? stats.getKills() : 0;
-            int deaths = stats.getDeaths() != null ? stats.getDeaths() : 0;
-            int assists = stats.getAssists() != null ? stats.getAssists() : 0;
-
-            double kda = deaths > 0 ? (kills + assists) * 1.0 / deaths : kills + assists;
-            double damageShare = totals.getOrDefault("damage", 1L) > 0 ?
-                    damage * 100.0 / totals.get("damage") : 0;
-            double takenShare = totals.getOrDefault("taken", 1L) > 0 ?
-                    taken * 100.0 / totals.get("taken") : 0;
-            double goldShare = totals.getOrDefault("gold", 1L) > 0 ?
-                    gold * 100.0 / totals.get("gold") : 0;
-            double kp = totals.getOrDefault("kills", 1L) > 0 ?
-                    (kills + assists) * 100.0 / totals.get("kills") : 0;
-
-            Map<String, Object> playerData = new LinkedHashMap<>();
-            playerData.put("participantId", participant.getParticipantId());
-            playerData.put("teamId", participant.getTeamId());
-            playerData.put("championId", participant.getChampionId());
-            playerData.put("win", stats.getWin());
-            playerData.put("kda", Math.round(kda * 100) / 100.0);
-            playerData.put("kills", kills);
-            playerData.put("deaths", deaths);
-            playerData.put("assists", assists);
-            playerData.put("gold", gold);
-            playerData.put("damage", damage);
-            playerData.put("taken", taken);
-            playerData.put("damageShare", Math.round(damageShare * 10) / 10.0);
-            playerData.put("takenShare", Math.round(takenShare * 10) / 10.0);
-            playerData.put("goldShare", Math.round(goldShare * 10) / 10.0);
-            playerData.put("killParticipation", Math.round(kp * 10) / 10.0);
-
-            // 符文
-            playerData.put("perks", Map.of(
-                    "primary", stats.getPerk0() != null ? stats.getPerk0() : 0,
-                    "subStyle", stats.getPerkSubStyle() != null ? stats.getPerkSubStyle() : 0
-            ));
-
-            // 强化
-            List<Integer> augments = new ArrayList<>();
-            if (stats.getPlayerAugment1() != null && stats.getPlayerAugment1() > 0) augments.add(stats.getPlayerAugment1());
-            if (stats.getPlayerAugment2() != null && stats.getPlayerAugment2() > 0) augments.add(stats.getPlayerAugment2());
-            if (stats.getPlayerAugment3() != null && stats.getPlayerAugment3() > 0) augments.add(stats.getPlayerAugment3());
-            if (stats.getPlayerAugment4() != null && stats.getPlayerAugment4() > 0) augments.add(stats.getPlayerAugment4());
-            playerData.put("augments", augments);
-
-            // 获取玩家名称
-            String displayName = getPlayerName(gameDetail, participant.getParticipantId());
-            playerData.put("name", displayName);
-
-            players.add(playerData);
-        }
-
-        // 按队伍分组
-        List<Map<String, Object>> teams = new ArrayList<>();
-        Map<Integer, List<Map<String, Object>>> teamPlayers = players.stream()
-                .collect(Collectors.groupingBy(p -> (Integer) p.get("teamId")));
-
-        for (Map.Entry<Integer, List<Map<String, Object>>> entry : teamPlayers.entrySet()) {
-            Map<String, Object> teamData = new LinkedHashMap<>();
-            teamData.put("teamId", entry.getKey());
-            teamData.put("result", entry.getValue().get(0).get("win") != null &&
-                    (Boolean) entry.getValue().get(0).get("win") ? "胜方" : "败方");
-            teamData.put("players", entry.getValue());
-            teams.add(teamData);
-        }
-
-        // 按胜负排序
-        teams.sort((a, b) -> {
-            boolean aWin = "胜方".equals(a.get("result"));
-            boolean bWin = "胜方".equals(b.get("result"));
-            return Boolean.compare(bWin, aWin);
-        });
+        Map<Integer, Map<String, Long>> teamTotals = calculateTeamTotals(gameDetail.getParticipants());
+        List<Map<String, Object>> players = buildPlayersData(gameDetail.getParticipants(), teamTotals);
+        List<Map<String, Object>> teams = buildTeamsData(players);
 
         Map<String, Object> snapshot = new LinkedHashMap<>();
         snapshot.put("gameId", gameDetail.getGameId());
@@ -479,7 +391,158 @@ public class AiAnalysisService {
     }
 
     /**
-     * 获取玩家名称
+     * 计算队伍总和
+     */
+    private Map<Integer, Map<String, Long>> calculateTeamTotals(List<GameDetail.GameParticipant> participants) {
+        Map<Integer, Map<String, Long>> teamTotals = new HashMap<>();
+        
+        for (GameDetail.GameParticipant participant : participants) {
+            int teamId = participant.getTeamId();
+            Map<String, Long> totals = teamTotals.computeIfAbsent(teamId, k -> new HashMap<>());
+            GameDetail.Stats stats = participant.getStats();
+
+            totals.merge("damage", stats.getTotalDamageDealtToChampions() != null ? stats.getTotalDamageDealtToChampions() : 0L, Long::sum);
+            totals.merge("taken", stats.getTotalDamageTaken() != null ? stats.getTotalDamageTaken() : 0L, Long::sum);
+            totals.merge("gold", stats.getGoldEarned() != null ? stats.getGoldEarned() : 0L, Long::sum);
+            totals.merge("kills", stats.getKills() != null ? stats.getKills().longValue() : 0L, Long::sum);
+        }
+        
+        return teamTotals;
+    }
+
+    /**
+     * 构建玩家数据列表
+     */
+    private List<Map<String, Object>> buildPlayersData(
+            List<GameDetail.GameParticipant> participants,
+            Map<Integer, Map<String, Long>> teamTotals) {
+        
+        List<Map<String, Object>> players = new ArrayList<>();
+        
+        for (GameDetail.GameParticipant participant : participants) {
+            Map<String, Object> playerData = buildPlayerData(participant, teamTotals);
+            players.add(playerData);
+        }
+        
+        return players;
+    }
+
+    /**
+     * 构建单个玩家数据
+     */
+    private Map<String, Object> buildPlayerData(
+            GameDetail.GameParticipant participant,
+            Map<Integer, Map<String, Long>> teamTotals) {
+        
+        Map<String, Object> playerData = new LinkedHashMap<>();
+        GameDetail.Stats stats = participant.getStats();
+        Map<String, Long> totals = teamTotals.getOrDefault(participant.getTeamId(), new HashMap<>());
+
+        // 基础数据
+        playerData.put("participantId", participant.getParticipantId());
+        playerData.put("teamId", participant.getTeamId());
+        playerData.put("championId", participant.getChampionId());
+        playerData.put("win", stats.getWin());
+
+        // KDA 和统计
+        int kills = stats.getKills() != null ? stats.getKills() : 0;
+        int deaths = stats.getDeaths() != null ? stats.getDeaths() : 0;
+        int assists = stats.getAssists() != null ? stats.getAssists() : 0;
+        double kda = deaths > 0 ? (kills + assists) * 1.0 / deaths : kills + assists;
+        
+        playerData.put("kda", Math.round(kda * 100) / 100.0);
+        playerData.put("kills", kills);
+        playerData.put("deaths", deaths);
+        playerData.put("assists", assists);
+
+        // 经济和数据
+        long damage = stats.getTotalDamageDealtToChampions() != null ? stats.getTotalDamageDealtToChampions() : 0;
+        long taken = stats.getTotalDamageTaken() != null ? stats.getTotalDamageTaken() : 0;
+        long gold = stats.getGoldEarned() != null ? stats.getGoldEarned() : 0;
+        
+        playerData.put("gold", gold);
+        playerData.put("damage", damage);
+        playerData.put("taken", taken);
+
+        // 占比数据
+        playerData.put("damageShare", calculateShare(damage, totals.getOrDefault("damage", 1L)));
+        playerData.put("takenShare", calculateShare(taken, totals.getOrDefault("taken", 1L)));
+        playerData.put("goldShare", calculateShare(gold, totals.getOrDefault("gold", 1L)));
+        playerData.put("killParticipation", calculateShare(kills + assists, totals.getOrDefault("kills", 1L)));
+
+        // 符文和强化
+        playerData.put("perks", buildPerksData(stats));
+        playerData.put("augments", buildAugmentsData(stats));
+        playerData.put("name", getPlayerNameFromDetail(participant.getParticipantId()));
+
+        return playerData;
+    }
+
+    /**
+     * 计算占比
+     */
+    private double calculateShare(long value, long total) {
+        if (total <= 0) return 0;
+        return Math.round(value * 100.0 / total * 10) / 10.0;
+    }
+
+    /**
+     * 构建符文数据
+     */
+    private Map<String, Integer> buildPerksData(GameDetail.Stats stats) {
+        return Map.of(
+                "primary", stats.getPerk0() != null ? stats.getPerk0() : 0,
+                "subStyle", stats.getPerkSubStyle() != null ? stats.getPerkSubStyle() : 0
+        );
+    }
+
+    /**
+     * 构建强化数据
+     */
+    private List<Integer> buildAugmentsData(GameDetail.Stats stats) {
+        List<Integer> augments = new ArrayList<>();
+        if (stats.getPlayerAugment1() != null && stats.getPlayerAugment1() > 0) augments.add(stats.getPlayerAugment1());
+        if (stats.getPlayerAugment2() != null && stats.getPlayerAugment2() > 0) augments.add(stats.getPlayerAugment2());
+        if (stats.getPlayerAugment3() != null && stats.getPlayerAugment3() > 0) augments.add(stats.getPlayerAugment3());
+        if (stats.getPlayerAugment4() != null && stats.getPlayerAugment4() > 0) augments.add(stats.getPlayerAugment4());
+        return augments;
+    }
+
+    /**
+     * 构建队伍数据列表
+     */
+    private List<Map<String, Object>> buildTeamsData(List<Map<String, Object>> players) {
+        List<Map<String, Object>> teams = new ArrayList<>();
+        
+        Map<Integer, List<Map<String, Object>>> teamPlayers = players.stream()
+                .collect(Collectors.groupingBy(p -> (Integer) p.get("teamId")));
+
+        for (Map.Entry<Integer, List<Map<String, Object>>> entry : teamPlayers.entrySet()) {
+            Map<String, Object> teamData = new LinkedHashMap<>();
+            teamData.put("teamId", entry.getKey());
+            teamData.put("result", determineTeamResult(entry.getValue()));
+            teamData.put("players", entry.getValue());
+            teams.add(teamData);
+        }
+
+        // 按胜负排序
+        teams.sort(Comparator.comparing(t -> !"胜方".equals(t.get("result"))));
+        
+        return teams;
+    }
+
+    /**
+     * 判断队伍结果
+     */
+    private String determineTeamResult(List<Map<String, Object>> teamPlayers) {
+        if (teamPlayers.isEmpty()) return "未知";
+        
+        Boolean win = (Boolean) teamPlayers.get(0).get("win");
+        return win != null && win ? "胜方" : "败方";
+    }
+
+    /**
+     * 获取玩家名称（从 GameDetail 对象）
      */
     private String getPlayerName(GameDetail gameDetail, Integer participantId) {
         if (gameDetail.getParticipantIdentities() != null) {
@@ -495,6 +558,14 @@ public class AiAnalysisService {
                 }
             }
         }
+        return "玩家" + participantId;
+    }
+
+    /**
+     * 获取玩家名称（从当前分析的 gameDetail）
+     */
+    private String getPlayerNameFromDetail(Integer participantId) {
+        // 需要从外部传入或存储 currentGameDetail，这里暂时返回默认值
         return "玩家" + participantId;
     }
 
@@ -516,5 +587,17 @@ public class AiAnalysisService {
         } catch (Exception e) {
             return obj.toString();
         }
+    }
+
+    /**
+     * 异步分析对局详情
+     * @param gameId 游戏 ID
+     * @param mode 分析模式
+     * @param participantId 玩家 ID
+     * @return CompletableFuture
+     */
+    @Async("aiExecutor")
+    public CompletableFuture<AIAnalysisResult> analyzeGameDetailAsync(Long gameId, String mode, Integer participantId) {
+        return CompletableFuture.completedFuture(analyzeGameDetail(gameId, mode, participantId));
     }
 }

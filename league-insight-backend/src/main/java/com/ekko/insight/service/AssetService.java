@@ -2,13 +2,16 @@ package com.ekko.insight.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,7 +32,7 @@ public class AssetService {
     // 召唤师技能缓存 (id -> iconPath)
     private final Map<Long, String> spellIconPathCache = new ConcurrentHashMap<>();
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         log.info("初始化资源服务...");
         // 异步加载资源
@@ -327,7 +330,8 @@ public class AssetService {
         @JsonProperty("alias")
         private String alias;
 
-        public Champion() {}
+        public Champion() {
+        }
 
         public Champion(long id, String name, String alias) {
             this.id = id;

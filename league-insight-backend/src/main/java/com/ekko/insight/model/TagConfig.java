@@ -12,7 +12,7 @@ import java.util.List;
  * 支持灵活的条件树结构
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -110,7 +110,6 @@ public class TagConfig {
         /**
          * AND 条件
          */
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -123,7 +122,6 @@ public class TagConfig {
         /**
          * OR 条件
          */
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -136,7 +134,6 @@ public class TagConfig {
         /**
          * NOT 条件
          */
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -149,7 +146,6 @@ public class TagConfig {
         /**
          * 历史战绩条件
          */
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -163,7 +159,6 @@ public class TagConfig {
         /**
          * 当前队列条件
          */
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -176,7 +171,6 @@ public class TagConfig {
         /**
          * 当前英雄条件
          */
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -198,7 +192,6 @@ public class TagConfig {
     })
     public static abstract class MatchFilter {
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -207,7 +200,6 @@ public class TagConfig {
             private List<Integer> ids;
         }
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -216,7 +208,6 @@ public class TagConfig {
             private List<Integer> ids;
         }
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -242,7 +233,6 @@ public class TagConfig {
     })
     public static abstract class MatchRefresh {
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -252,7 +242,6 @@ public class TagConfig {
             private Double value;
         }
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -261,9 +250,9 @@ public class TagConfig {
             private String metric;
             private Operator op;
             private Double value;
+
         }
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -274,7 +263,6 @@ public class TagConfig {
             private Double value;
         }
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -285,7 +273,6 @@ public class TagConfig {
             private Double value;
         }
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor
@@ -296,7 +283,6 @@ public class TagConfig {
             private Double value;
         }
 
-        @EqualsAndHashCode(callSuper = true)
         @Data
         @NoArgsConstructor
         @AllArgsConstructor

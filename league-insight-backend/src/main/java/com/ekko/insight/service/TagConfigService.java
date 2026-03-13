@@ -3,18 +3,19 @@ package com.ekko.insight.service;
 import com.ekko.insight.model.MatchHistory;
 import com.ekko.insight.model.RankTag;
 import com.ekko.insight.model.TagConfig;
-
+import com.ekko.insight.model.TagConfig.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ekko.insight.model.TagConfig.*;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 标签配置服务
@@ -30,7 +31,7 @@ public class TagConfigService {
 
     private List<TagConfig> tagConfigs = new ArrayList<>();
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         loadConfig();
     }
@@ -103,7 +104,7 @@ public class TagConfigService {
      * 评估条件并返回结果（包含连胜数）
      */
     private EvaluateResult evaluateConditionWithResult(TagCondition condition, List<MatchHistory> history,
-                                                        String puuid, Integer currentMode) {
+                                                       String puuid, Integer currentMode) {
         if (condition instanceof TagCondition.HistoryCondition hc) {
             // 应用过滤器
             List<MatchHistory> filtered = history;
@@ -131,7 +132,7 @@ public class TagConfigService {
     // ========== 条件评估 ==========
 
     private boolean evaluateCondition(TagCondition condition, List<MatchHistory> history,
-                                       String puuid, Integer currentMode) {
+                                      String puuid, Integer currentMode) {
         return switch (condition) {
             case TagCondition.AndCondition and -> and.getConditions().stream()
                     .allMatch(c -> evaluateCondition(c, history, puuid, currentMode));
@@ -149,7 +150,7 @@ public class TagConfigService {
     }
 
     private boolean evaluateHistoryCondition(TagCondition.HistoryCondition condition,
-                                              List<MatchHistory> history, String puuid) {
+                                             List<MatchHistory> history, String puuid) {
         // 应用过滤器
         List<MatchHistory> filtered = history;
         for (MatchFilter filter : condition.getFilters()) {
@@ -292,7 +293,7 @@ public class TagConfigService {
             case "kda" -> {
                 int deaths = stats.getDeaths() != null && stats.getDeaths() > 0 ? stats.getDeaths() : 1;
                 yield ((stats.getKills() != null ? stats.getKills() : 0) +
-                       (stats.getAssists() != null ? stats.getAssists() : 0)) * 1.0 / deaths;
+                        (stats.getAssists() != null ? stats.getAssists() : 0)) * 1.0 / deaths;
             }
             case "win" -> Boolean.TRUE.equals(stats.getWin()) ? 1.0 : 0.0;
             case "gold" -> stats.getGoldEarned() != null ? stats.getGoldEarned() : 0;
@@ -349,7 +350,8 @@ public class TagConfigService {
     private void loadConfig() {
         if (configFile.exists()) {
             try {
-                tagConfigs = objectMapper.readValue(configFile, new TypeReference<>() {});
+                tagConfigs = objectMapper.readValue(configFile, new TypeReference<>() {
+                });
                 log.info("已加载 {} 个标签配置", tagConfigs.size());
             } catch (IOException e) {
                 log.warn("加载标签配置失败，使用默认配置: {}", e.getMessage());
@@ -386,98 +388,98 @@ public class TagConfigService {
         );
 
         // 连胜标签
-        defaults.add(TagConfig.builder()
-                .id("default_streak_win")
-                .name("{N}连胜")
-                .desc("最近胜率较高的大腿玩家哦")
-                .good(true)
-                .enabled(true)
-                .isDefault(true)
-                .condition(new TagCondition.HistoryCondition(
+        defaults.add(new TagConfig(
+                "default_streak_win",
+                "{N}连胜",
+                "最近胜率较高的大腿玩家哦",
+                true,
+                true,
+                true,
+                new TagCondition.HistoryCondition(
                         List.of(new MatchFilter.QueueFilter(rankedIds)),
                         new MatchRefresh.StreakRefresh(3, StreakType.WIN)
-                ))
-                .build());
+                )
+        ));
 
         // 连败标签
-        defaults.add(TagConfig.builder()
-                .id("default_streak_loss")
-                .name("{N}连败")
-                .desc("最近连败的玩家哦")
-                .good(false)
-                .enabled(true)
-                .isDefault(true)
-                .condition(new TagCondition.HistoryCondition(
+        defaults.add(new TagConfig(
+                "default_streak_loss",
+                "{N}连败",
+                "最近连败的玩家哦",
+                false,
+                true,
+                true,
+                new TagCondition.HistoryCondition(
                         List.of(new MatchFilter.QueueFilter(rankedIds)),
                         new MatchRefresh.StreakRefresh(3, StreakType.LOSS)
-                ))
-                .build());
+                )
+        ));
 
         // 娱乐玩家标签
         List<Integer> casualIds = List.of(430, 450, 900, 1900, 2000); // 匹配、大乱斗等
-        defaults.add(TagConfig.builder()
-                .id("default_casual")
-                .name("娱乐")
-                .desc("排位比例较少")
-                .good(false)
-                .enabled(true)
-                .isDefault(true)
-                .condition(new TagCondition.HistoryCondition(
+        defaults.add(new TagConfig(
+                "default_casual",
+                "娱乐",
+                "排位比例较少",
+                false,
+                true,
+                true,
+                new TagCondition.HistoryCondition(
                         List.of(new MatchFilter.QueueFilter(casualIds)),
                         new MatchRefresh.CountRefresh(Operator.GT, 5.0)
-                ))
-                .build());
+                )
+        ));
 
         // 峡谷慈善家标签
-        defaults.add(TagConfig.builder()
-                .id("default_feeder")
-                .name("峡谷慈善家")
-                .desc("死亡数较多的玩家")
-                .good(false)
-                .enabled(true)
-                .isDefault(true)
-                .condition(new TagCondition.HistoryCondition(
+        defaults.add(new TagConfig(
+                "default_feeder",
+                "峡谷慈善家",
+                "死亡数较多的玩家",
+                false,
+                true,
+                true,
+                new TagCondition.HistoryCondition(
                         List.of(
                                 new MatchFilter.QueueFilter(rankedIds),
                                 new MatchFilter.StatFilter("deaths", Operator.GTE, 10.0)
                         ),
                         new MatchRefresh.CountRefresh(Operator.GTE, 5.0)
-                ))
-                .build());
+                )
+        ));
 
         // Carry 玩家标签
-        defaults.add(TagConfig.builder()
-                .id("default_carry")
-                .name("Carry")
-                .desc("近期比赛多次Carry")
-                .good(true)
-                .enabled(true)
-                .isDefault(true)
-                .condition(new TagCondition.HistoryCondition(
+        defaults.add(new TagConfig(
+                "default_carry",
+                "Carry",
+                "近期比赛多次 Carry",
+                true,
+                true,
+                true,
+                new TagCondition.HistoryCondition(
                         List.of(
                                 new MatchFilter.QueueFilter(rankedIds),
                                 new MatchFilter.StatFilter("kda", Operator.GTE, 6.0)
                         ),
                         new MatchRefresh.CountRefresh(Operator.GTE, 5.0)
-                ))
-                .build());
+                )
+        ));
 
         // 小火龙专精标签
-        defaults.add(TagConfig.builder()
-                .id("default_special_smolder")
-                .name("小火龙")
-                .desc("该玩家使用小火龙场次较多")
-                .good(false)
-                .enabled(true)
-                .isDefault(true)
-                .condition(new TagCondition.HistoryCondition(
+        defaults.add(new TagConfig(
+                "default_special_smolder",
+                "小火龙",
+                "该玩家使用小火龙场次较多",
+                false,
+                true,
+                true,
+                new TagCondition.HistoryCondition(
                         List.of(
                                 new MatchFilter.QueueFilter(rankedIds),
                                 new MatchFilter.ChampionFilter(List.of(901))
                         ),
                         new MatchRefresh.CountRefresh(Operator.GTE, 5.0)
-                ))
-                .build());
+                )
+        ));
 
         return defaults;
     }

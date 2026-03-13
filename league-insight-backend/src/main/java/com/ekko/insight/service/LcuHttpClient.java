@@ -1,15 +1,18 @@
 package com.ekko.insight.service;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ekko.insight.exception.LcuException;
 import com.ekko.insight.jna.ProcessUtils;
 import com.ekko.insight.model.AuthInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
@@ -195,12 +198,10 @@ public class LcuHttpClient {
             throw new LcuException("无法获取 LCU 认证信息，请确保游戏客户端已启动");
         }
 
-        String url = auth.buildUrl(uri);
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Authorization", auth.toBasicAuth())
+        Request request = new LcuRequestBuilder(auth)
+                .uri(uri)
                 .get()
-                .build();
+                .build(null);
 
         log.debug("LCU GET: {}", uri);
         return executeRequest(request, responseType);
@@ -212,14 +213,12 @@ public class LcuHttpClient {
             throw new LcuException("无法获取 LCU 认证信息，请确保游戏客户端已启动");
         }
 
-        String url = auth.buildUrl(uri);
         String jsonBody = body != null ? objectMapper.writeValueAsString(body) : "{}";
 
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Authorization", auth.toBasicAuth())
-                .post(RequestBody.create(jsonBody, JSON))
-                .build();
+        Request request = new LcuRequestBuilder(auth)
+                .uri(uri)
+                .post(body)
+                .build(jsonBody);
 
         log.debug("LCU POST: {} body={}", uri, jsonBody);
         return executeRequest(request, responseType);
@@ -231,14 +230,12 @@ public class LcuHttpClient {
             throw new LcuException("无法获取 LCU 认证信息，请确保游戏客户端已启动");
         }
 
-        String url = auth.buildUrl(uri);
         String jsonBody = body != null ? objectMapper.writeValueAsString(body) : "{}";
 
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Authorization", auth.toBasicAuth())
-                .put(RequestBody.create(jsonBody, JSON))
-                .build();
+        Request request = new LcuRequestBuilder(auth)
+                .uri(uri)
+                .put(body)
+                .build(jsonBody);
 
         log.debug("LCU PUT: {}", uri);
         return executeRequest(request, responseType);
@@ -250,14 +247,12 @@ public class LcuHttpClient {
             throw new LcuException("无法获取 LCU 认证信息，请确保游戏客户端已启动");
         }
 
-        String url = auth.buildUrl(uri);
         String jsonBody = body != null ? objectMapper.writeValueAsString(body) : "{}";
 
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Authorization", auth.toBasicAuth())
-                .patch(RequestBody.create(jsonBody, JSON))
-                .build();
+        Request request = new LcuRequestBuilder(auth)
+                .uri(uri)
+                .patch(body)
+                .build(jsonBody);
 
         log.debug("LCU PATCH: {}", uri);
         return executeRequest(request, responseType);
@@ -269,12 +264,10 @@ public class LcuHttpClient {
             throw new LcuException("无法获取 LCU 认证信息，请确保游戏客户端已启动");
         }
 
-        String url = auth.buildUrl(uri);
-        Request request = new Request.Builder()
-                .url(url)
-                .addHeader("Authorization", auth.toBasicAuth())
+        Request request = new LcuRequestBuilder(auth)
+                .uri(uri)
                 .delete()
-                .build();
+                .build(null);
 
         log.debug("LCU DELETE: {}", uri);
         return executeRequest(request, responseType);

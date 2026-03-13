@@ -1,9 +1,9 @@
 package com.ekko.insight.jna;
 
 import com.ekko.insight.model.AuthInfo;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.Tlhelp32;
 import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;

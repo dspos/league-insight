@@ -1,13 +1,8 @@
 {
-  "resources": {
-    "includes": [
-      {"pattern": "application.yml"},
-      {"pattern": "application-*.yml"},
-      {"pattern": "banner.txt"},
-      {"pattern": "META-INF/native-image/.*"},
-      {"pattern": "META-INF/spring/.*"},
-      {"pattern": "META-INF/spring.factories"},
-      {"pattern": "META-INF/services/.*"}
-    ]
-  }
+  "bundles": [],
+  "resources": [
+    {"pattern": "\\QMETA-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports\\E"},
+    {"pattern": "\\Qapplication.yml\\E"},
+    {"pattern": "\\Qapplication.yaml\\E"}
+  ]
 }

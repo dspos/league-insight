@@ -1,15 +1,19 @@
 package com.ekko.insight.service;
 
+import com.ekko.insight.constant.QueueType;
+import com.ekko.insight.exception.LcuException;
+import com.ekko.insight.exception.ResourceNotFoundException;
 import com.ekko.insight.model.*;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.ekko.insight.constant.QueueType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,63 +26,52 @@ import java.util.concurrent.TimeUnit;
 public class UserTagService {
 
     private final LcuHttpClient lcuHttpClient;
-    private final LcuService lcuService;
+    private final SummonerService summonerService;
+    private final MatchHistoryService matchHistoryService;
     private final TagConfigService tagConfigService;
 
-    // 对局详情缓存
     private final Cache<Long, GameDetail> gameDetailCache = Caffeine.newBuilder()
             .maximumSize(500)
             .expireAfterWrite(30, TimeUnit.MINUTES)
             .build();
 
-    /**
-     * 根据名称获取用户标签
-     */
     public UserTag getUserTagByName(String name, Integer mode) {
         try {
-            Summoner summoner = lcuService.getSummonerByName(name);
+            Summoner summoner = summonerService.getSummonerByName(name);
             if (summoner == null) {
-                throw new RuntimeException("未找到召唤师: %s".formatted(name));
+                throw new ResourceNotFoundException("召唤师", name);
             }
             return getUserTagByPuuid(summoner.getPuuid(), mode);
+        } catch (ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("获取用户标签失败: {}", e.getMessage());
-            return createEmptyTag();
+            throw new LcuException("获取用户标签失败：" + name, e);
         }
     }
 
-    /**
-     * 根据 PUUID 获取用户标签
-     */
     public UserTag getUserTagByPuuid(String puuid, Integer mode) {
-        log.debug("计算用户标签: puuid={}, mode={}", puuid, mode);
+        log.debug("计算用户标签：puuid={}, mode={}", puuid, mode);
 
         try {
-            // 获取战绩
-            List<MatchHistory> matchHistory = lcuService.getMatchHistory(puuid, 0, 20);
+            List<MatchHistory> matchHistory = matchHistoryService.getMatchHistory(puuid, 0, 20);
 
             if (matchHistory.isEmpty()) {
                 return createEmptyTag();
             }
 
-            // 获取对局详情
             List<MatchHistory> enrichedHistory = enrichMatchHistory(matchHistory);
-            log.debug("enrichMatchHistory 完成, 有效对局数: {}", enrichedHistory.stream()
+            log.debug("enrichMatchHistory 完成，有效对局数：{}", enrichedHistory.stream()
                     .filter(g -> g.getParticipants() != null && !g.getParticipants().isEmpty())
                     .count());
 
-            // 计算标签
             List<RankTag> tags = evaluateTags(enrichedHistory, puuid, mode);
-            log.debug("evaluateTags 结果: {} 个标签", tags.size());
+            log.debug("evaluateTags 结果：{} 个标签", tags.size());
 
-            // 计算近期数据
             RecentData recentData = calculateRecentData(enrichedHistory, puuid, mode);
 
-            // 分析遇到过的人
             Map<String, List<OneGamePlayer>> oneGamePlayersMap = analyzeOneGamePlayers(enrichedHistory, puuid);
             recentData.setOneGamePlayersMap(oneGamePlayersMap);
 
-            // 计算好友/冤家
             calculateFriendAndDispute(oneGamePlayersMap, recentData, puuid);
 
             return UserTag.builder()
@@ -87,24 +80,18 @@ public class UserTagService {
                     .build();
 
         } catch (Exception e) {
-            log.error("计算用户标签失败: {}", e.getMessage(), e);
+            log.error("计算用户标签失败：{}", e.getMessage(), e);
             return createEmptyTag();
         }
     }
 
-    /**
-     * 获取对局详情
-     */
     private List<MatchHistory> enrichMatchHistory(List<MatchHistory> matchHistory) {
-        // 为每场对局获取详情，以便获取所有 10 个玩家的信息
         for (MatchHistory game : matchHistory) {
             try {
-                // 使用缓存获取对局详情
                 GameDetail detail = gameDetailCache.get(game.getGameId(),
-                        lcuService::getGameDetailById);
+                        id -> lcuHttpClient.get("lol-match-history/v1/games/" + id, GameDetail.class));
 
                 if (detail != null && detail.getParticipants() != null) {
-                    // 将 GameDetail 中的参与者信息转换到 MatchHistory
                     List<MatchHistory.Participant> allParticipants = new ArrayList<>();
                     List<MatchHistory.ParticipantIdentity> allIdentities = new ArrayList<>();
 
@@ -157,18 +144,11 @@ public class UserTagService {
         return matchHistory;
     }
 
-    /**
-     * 评估标签
-     */
     private List<RankTag> evaluateTags(List<MatchHistory> matchHistory, String puuid, Integer mode) {
         return tagConfigService.evaluateTags(matchHistory, puuid, mode);
     }
 
-    /**
-     * 获取玩家的 participant（根据 puuid）
-     */
     private MatchHistory.Participant getParticipantByPuuid(MatchHistory game, String puuid) {
-        // 先从 participantIdentities 找到 participantId
         Integer participantId = null;
         if (game.getParticipantIdentities() != null) {
             for (MatchHistory.ParticipantIdentity identity : game.getParticipantIdentities()) {
@@ -179,7 +159,6 @@ public class UserTagService {
             }
         }
 
-        // 根据 participantId 找到 participant
         if (participantId != null && game.getParticipants() != null) {
             for (MatchHistory.Participant p : game.getParticipants()) {
                 if (participantId.equals(p.getParticipantId())) {
@@ -191,9 +170,6 @@ public class UserTagService {
         return null;
     }
 
-    /**
-     * 检测连胜
-     */
     private RankTag checkStreak(List<MatchHistory> matchHistory, String puuid, Integer mode) {
         int streak = 0;
         for (MatchHistory game : matchHistory) {
@@ -223,9 +199,6 @@ public class UserTagService {
         return null;
     }
 
-    /**
-     * 检测连败
-     */
     private RankTag checkLosing(List<MatchHistory> matchHistory, String puuid, Integer mode) {
         int losing = 0;
         for (MatchHistory game : matchHistory) {
@@ -255,9 +228,6 @@ public class UserTagService {
         return null;
     }
 
-    /**
-     * 检测娱乐玩家
-     */
     private RankTag checkCasual(List<MatchHistory> matchHistory, Integer mode) {
         long aramCount = matchHistory.stream()
                 .filter(g -> mode == 0 || mode.equals(g.getQueueId()))
@@ -278,9 +248,6 @@ public class UserTagService {
         return null;
     }
 
-    /**
-     * 检测高手玩家
-     */
     private RankTag checkPro(List<MatchHistory> matchHistory, String puuid, Integer mode) {
         int wins = 0;
         int total = 0;
@@ -314,9 +281,6 @@ public class UserTagService {
         return null;
     }
 
-    /**
-     * 计算近期数据
-     */
     private RecentData calculateRecentData(List<MatchHistory> matchHistory, String puuid, Integer mode) {
         int count = 0;
         double kills = 0, deaths = 0, assists = 0;
@@ -363,9 +327,6 @@ public class UserTagService {
                 .build();
     }
 
-    /**
-     * 获取玩家名称
-     */
     private String getPlayerName(MatchHistory game, Integer participantId) {
         if (game.getParticipantIdentities() != null) {
             for (MatchHistory.ParticipantIdentity identity : game.getParticipantIdentities()) {
@@ -383,9 +344,6 @@ public class UserTagService {
         return "未知";
     }
 
-    /**
-     * 获取玩家 puuid
-     */
     private String getPlayerPuuid(MatchHistory game, Integer participantId) {
         if (game.getParticipantIdentities() != null) {
             for (MatchHistory.ParticipantIdentity identity : game.getParticipantIdentities()) {
@@ -397,9 +355,6 @@ public class UserTagService {
         return null;
     }
 
-    /**
-     * 分析遇到过的人
-     */
     private Map<String, List<OneGamePlayer>> analyzeOneGamePlayers(List<MatchHistory> matchHistory, String myPuuid) {
         Map<String, List<OneGamePlayer>> result = new HashMap<>();
 
@@ -407,7 +362,6 @@ public class UserTagService {
             MatchHistory game = matchHistory.get(index);
             if (game.getParticipants() == null) continue;
 
-            // 找到自己的 teamId
             Integer myTeamId = null;
             MatchHistory.Participant myParticipant = getParticipantByPuuid(game, myPuuid);
             if (myParticipant != null) {
@@ -417,7 +371,6 @@ public class UserTagService {
             for (MatchHistory.Participant p : game.getParticipants()) {
                 String playerPuuid = getPlayerPuuid(game, p.getParticipantId());
 
-                // 跳过自己和机器人
                 if (playerPuuid == null || playerPuuid.isEmpty() || playerPuuid.equals(myPuuid)) {
                     continue;
                 }
@@ -425,7 +378,6 @@ public class UserTagService {
                 MatchHistory.Stats stats = p.getStats();
                 if (stats == null) continue;
 
-                // 获取玩家名称和 tagLine
                 String gameName = "";
                 String tagLine = "";
                 if (game.getParticipantIdentities() != null) {
@@ -461,9 +413,6 @@ public class UserTagService {
         return result;
     }
 
-    /**
-     * 计算好友/冤家
-     */
     private void calculateFriendAndDispute(
             Map<String, List<OneGamePlayer>> oneGamePlayersMap,
             RecentData recentData,
@@ -475,7 +424,6 @@ public class UserTagService {
         for (Map.Entry<String, List<OneGamePlayer>> entry : oneGamePlayersMap.entrySet()) {
             List<OneGamePlayer> games = entry.getValue();
 
-            // 至少 3 次相遇才判断
             if (games.size() < 3) continue;
 
             boolean allSameTeam = games.stream().allMatch(OneGamePlayer::getIsMyTeam);
@@ -487,7 +435,6 @@ public class UserTagService {
             }
         }
 
-        // 计算好友组队数据
         List<OneGamePlayerSummoner> friendsSummoner = new ArrayList<>();
         int friendsWins = 0, friendsLosses = 0;
 
@@ -498,7 +445,7 @@ public class UserTagService {
             friendsLosses += losses;
 
             try {
-                Summoner summoner = lcuService.getSummonerByPuuid(games.getFirst().getPuuid());
+                Summoner summoner = summonerService.getSummonerByPuuid(games.getFirst().getPuuid());
                 friendsSummoner.add(OneGamePlayerSummoner.builder()
                         .winRate(wins * 100 / games.size())
                         .wins(wins)
@@ -507,11 +454,10 @@ public class UserTagService {
                         .oneGamePlayer(games)
                         .build());
             } catch (Exception e) {
-                log.debug("获取召唤师信息失败: {}", e.getMessage());
+                log.debug("获取召唤师信息失败：{}", e.getMessage());
             }
         }
 
-        // 计算冤家组队数据
         List<OneGamePlayerSummoner> disputeSummoner = new ArrayList<>();
         int disputeWins = 0, disputeLosses = 0;
 
@@ -528,7 +474,7 @@ public class UserTagService {
             disputeLosses += losses;
 
             try {
-                Summoner summoner = lcuService.getSummonerByPuuid(games.get(0).getPuuid());
+                Summoner summoner = summonerService.getSummonerByPuuid(games.get(0).getPuuid());
                 disputeSummoner.add(OneGamePlayerSummoner.builder()
                         .winRate(wins * 100 / enemyGames.size())
                         .wins(wins)
@@ -537,7 +483,7 @@ public class UserTagService {
                         .oneGamePlayer(new ArrayList<>(enemyGames))
                         .build());
             } catch (Exception e) {
-                log.debug("获取召唤师信息失败: {}", e.getMessage());
+                log.debug("获取召唤师信息失败：{}", e.getMessage());
             }
         }
 
@@ -550,9 +496,6 @@ public class UserTagService {
         recentData.getFriendAndDispute().setDisputeSummoner(disputeSummoner);
     }
 
-    /**
-     * 创建空标签
-     */
     private UserTag createEmptyTag() {
         return UserTag.builder()
                 .recentData(RecentData.builder()

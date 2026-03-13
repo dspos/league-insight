@@ -1,15 +1,9 @@
 package com.ekko.insight.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.ekko.insight.constant.QueueType;
-import com.ekko.insight.model.ApiResponse;
-import com.ekko.insight.model.GameDetail;
-import com.ekko.insight.model.MatchHistory;
-import com.ekko.insight.model.Rank;
-import com.ekko.insight.model.Summoner;
-import com.ekko.insight.model.WinRate;
-import com.ekko.insight.service.LcuService;
-import com.ekko.insight.service.LcuHttpClient;
+import com.ekko.insight.model.*;
+import com.ekko.insight.service.*;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +18,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SummonerController {
 
-    private final LcuService lcuService;
+    private final SummonerService summonerService;
+    private final RankService rankService;
+    private final MatchHistoryService matchHistoryService;
     private final LcuHttpClient lcuHttpClient;
 
     /**
@@ -32,7 +28,7 @@ public class SummonerController {
      */
     @GetMapping("/me")
     public ApiResponse<Summoner> getMySummoner() {
-        return ApiResponse.success(lcuService.getMySummoner());
+        return ApiResponse.success(summonerService.getMySummoner());
     }
 
     /**
@@ -40,7 +36,7 @@ public class SummonerController {
      */
     @GetMapping("/puuid/{puuid}")
     public ApiResponse<Summoner> getSummonerByPuuid(@PathVariable String puuid) {
-        return ApiResponse.success(lcuService.getSummonerByPuuid(puuid));
+        return ApiResponse.success(summonerService.getSummonerByPuuid(puuid));
     }
 
     /**
@@ -48,7 +44,7 @@ public class SummonerController {
      */
     @GetMapping("/name/{name}")
     public ApiResponse<Summoner> getSummonerByName(@PathVariable String name) {
-        return ApiResponse.success(lcuService.getSummonerByName(name));
+        return ApiResponse.success(summonerService.getSummonerByName(name));
     }
 
     /**
@@ -56,21 +52,21 @@ public class SummonerController {
      */
     @GetMapping("/rank/{puuid}")
     public ApiResponse<Rank> getRank(@PathVariable String puuid) {
-        return ApiResponse.success(lcuService.getRankByPuuid(puuid));
+        return ApiResponse.success(rankService.getRankByPuuid(puuid));
     }
 
     /**
      * 获取召唤师战绩
      * @param puuid 玩家 PUUID
-     * @param begIndex 起始索引（默认0，inclusive）
-     * @param endIndex 结束索引（默认9，inclusive）
+     * @param begIndex 起始索引（默认 0，inclusive）
+     * @param endIndex 结束索引（默认 9，inclusive）
      */
     @GetMapping("/matches/{puuid}")
     public ApiResponse<List<MatchHistory>> getMatchHistory(
             @PathVariable String puuid,
             @RequestParam(defaultValue = "0") int begIndex,
             @RequestParam(defaultValue = "9") int endIndex) {
-        List<MatchHistory> matches = lcuService.getMatchHistory(puuid, begIndex, endIndex);
+        List<MatchHistory> matches = matchHistoryService.getMatchHistory(puuid, begIndex, endIndex);
         // 填充中文游戏模式名称
         for (MatchHistory match : matches) {
             if (match.getQueueId() != null) {
@@ -97,7 +93,7 @@ public class SummonerController {
             @RequestParam(required = false) Integer queueId,
             @RequestParam(required = false) Integer championId,
             @RequestParam(defaultValue = "10") int maxResults) {
-        List<MatchHistory> matches = lcuService.getFilteredMatchHistory(puuid, begIndex, endIndex, queueId, championId, maxResults);
+        List<MatchHistory> matches = matchHistoryService.getFilteredMatchHistory(puuid, begIndex, endIndex, queueId, championId, maxResults);
         // 填充中文游戏模式名称
         for (MatchHistory match : matches) {
             if (match.getQueueId() != null) {
@@ -114,7 +110,7 @@ public class SummonerController {
      */
     @GetMapping("/platform/{name}")
     public ApiResponse<String> getPlatformName(@PathVariable String name) {
-        return ApiResponse.success(lcuService.getPlatformName(name));
+        return ApiResponse.success(summonerService.getPlatformName(name));
     }
 
     /**
@@ -127,7 +123,7 @@ public class SummonerController {
     public ApiResponse<WinRate> getWinRate(
             @PathVariable String puuid,
             @RequestParam(required = false) Integer mode) {
-        return ApiResponse.success(lcuService.getWinRate(puuid, mode));
+        return ApiResponse.success(matchHistoryService.getWinRate(puuid, mode));
     }
 
     /**
@@ -137,7 +133,7 @@ public class SummonerController {
      */
     @GetMapping("/ranked-win-rates/{puuid}")
     public ApiResponse<Map<String, WinRate>> getRankedWinRates(@PathVariable String puuid) {
-        return ApiResponse.success(lcuService.getRankedWinRates(puuid));
+        return ApiResponse.success(matchHistoryService.getRankedWinRates(puuid));
     }
 
     /**
@@ -147,7 +143,7 @@ public class SummonerController {
      */
     @GetMapping("/game-detail/{gameId}")
     public ApiResponse<GameDetail> getGameDetail(@PathVariable Long gameId) {
-        return ApiResponse.success(lcuService.getGameDetailById(gameId));
+        return ApiResponse.success(matchHistoryService.getGameDetailById(gameId));
     }
 
     /**

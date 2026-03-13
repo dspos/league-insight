@@ -1,11 +1,11 @@
 package com.ekko.insight.controller;
 
-import com.ekko.insight.model.AIAnalysisResult;
 import com.ekko.insight.model.AIAnalysisRequest;
+import com.ekko.insight.model.AIAnalysisResult;
 import com.ekko.insight.model.ApiResponse;
 import com.ekko.insight.model.SessionData;
 import com.ekko.insight.service.AiAnalysisService;
-import com.ekko.insight.service.LcuService;
+import com.ekko.insight.service.SessionAnalysisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class AiController {
 
     private final AiAnalysisService aiAnalysisService;
-    private final LcuService lcuService;
+    private final SessionAnalysisService sessionAnalysisService;
 
     /**
      * 分析对局详情
@@ -29,7 +29,7 @@ public class AiController {
      */
     @PostMapping("/analyze")
     public ApiResponse<AIAnalysisResult> analyzeGameDetail(@RequestBody AIAnalysisRequest request) {
-        log.info("AI 分析请求: gameId={}, mode={}, participantId={}",
+        log.info("AI 分析请求：gameId={}, mode={}, participantId={}",
                 request.getGameId(), request.getMode(), request.getParticipantId());
 
         String mode = request.getMode() != null ? request.getMode() : "overview";
@@ -52,9 +52,9 @@ public class AiController {
     public ApiResponse<AIAnalysisResult> analyzeSession(
             @RequestParam(value = "analysisMode", required = false, defaultValue = "team") String analysisMode,
             @RequestParam(value = "queueMode", required = false) Integer queueMode) {
-        log.info("AI 房间分析请求: analysisMode={}, queueMode={}", analysisMode, queueMode);
+        log.info("AI 房间分析请求：analysisMode={}, queueMode={}", analysisMode, queueMode);
 
-        SessionData sessionData = lcuService.getSessionData(queueMode);
+        SessionData sessionData = sessionAnalysisService.getSessionData(queueMode);
         AIAnalysisResult result = aiAnalysisService.analyzeSessionData(sessionData, analysisMode);
 
         return ApiResponse.success(result);
