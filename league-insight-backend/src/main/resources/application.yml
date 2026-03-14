@@ -31,9 +31,9 @@ app:
       ban-champion-slice: []
     ai:
       enabled: true
-      api-key: "sk-c28f2b4a5d694522a37ce977822df5df"
-      endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1"
-      model: "qwen-plus"
+      api-key: "xxx"
+      endpoint: "xxx"
+      model: "xxx"
 
 # 日志配置
 logging:
