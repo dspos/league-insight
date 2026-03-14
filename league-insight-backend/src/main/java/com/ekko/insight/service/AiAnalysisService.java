@@ -1,5 +1,13 @@
 package com.ekko.insight.service;
 
+import com.alibaba.dashscope.aigc.generation.Generation;
+import com.alibaba.dashscope.aigc.generation.GenerationParam;
+import com.alibaba.dashscope.aigc.generation.GenerationResult;
+import com.alibaba.dashscope.common.Message;
+import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.exception.ApiException;
+import com.alibaba.dashscope.exception.InputRequiredException;
+import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.ekko.insight.config.AppConfig;
 import com.ekko.insight.model.AIAnalysisResult;
 import com.ekko.insight.model.GameDetail;
@@ -149,60 +157,59 @@ public class AiAnalysisService {
             model = DEFAULT_MODEL;
         }
 
-        log.info("调用 AI API: endpoint={}, model={}", endpoint, model);
+        log.info("🤖 调用阿里云 AI: model={}, promptLength={}", model, prompt.length());
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", model);
-        requestBody.put("messages", List.of(
-                Map.of("role", "system", "content", SYSTEM_PROMPT),
-                Map.of("role", "user", "content", prompt)
-        ));
+        Generation gen = new Generation();
 
-        String jsonBody = objectMapper.writeValueAsString(requestBody);
+        try {
+            // 2. 构建消息列表
+            Message systemMsg = Message.builder()
+                    .role(Role.SYSTEM.getValue())
+                    .content(SYSTEM_PROMPT)
+                    .build();
 
-        Request request = new Request.Builder()
-                .url(endpoint)
-                .header("Authorization", "Bearer " + apiKey)
-                .header("Content-Type", "application/json")
-                .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
-                .build();
+            Message userMsg = Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt)
+                    .build();
 
-        long startTime = System.currentTimeMillis();
-        try (Response response = httpClient.newCall(request).execute()) {
+            // 3. 构建请求参数
+            GenerationParam param = GenerationParam.builder()
+                    .apiKey(apiKey)
+                    .model(model)
+                    .messages(Arrays.asList(systemMsg, userMsg))
+                    .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                    .build();
+
+            // 4. 发起调用
+            long startTime = System.currentTimeMillis();
+            GenerationResult result = gen.call(param);
             long elapsed = System.currentTimeMillis() - startTime;
-            log.info("AI API 响应: code={}, elapsed={}ms", response.code(), elapsed);
 
-            if (!response.isSuccessful()) {
-                String errorBody = response.body() != null ? response.body().string() : "无响应体";
-                log.error("AI API 调用失败: code={}, body={}", response.code(), errorBody);
+            // 5. 解析结果
+            if (result.getOutput() != null && result.getOutput().getChoices() != null) {
+                String content = result.getOutput().getChoices().getFirst().getMessage().getContent();
+                log.info("✅ AI 响应成功: elapsed={}ms, contentLength={}", elapsed, content.length());
+                return content;
+            } else {
+                log.warn("⚠️ AI 返回结果为空或格式异常: {}", result);
                 return null;
             }
 
-            ResponseBody body = response.body();
-            if (body == null) {
-                return null;
-            }
-
-            String responseBody = body.string();
-            Map<String, Object> responseMap = objectMapper.readValue(responseBody, Map.class);
-
-            if (responseMap.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseMap.get("choices");
-                if (!choices.isEmpty()) {
-                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                    if (message != null) {
-                        return (String) message.get("content");
-                    }
-                }
-            }
-
-            if (responseMap.containsKey("error")) {
-                Map<String, Object> error = (Map<String, Object>) responseMap.get("error");
-                log.error("AI API 返回错误: {}", error.get("message"));
-            }
-
+        } catch (NoApiKeyException e) {
+            log.error("❌ AI 调用失败: 缺少 API Key ({})", e.getMessage());
+            return null;
+        } catch (InputRequiredException e) {
+            log.error("❌ AI 调用失败: 输入参数缺失 ({})", e.getMessage());
+            return null;
+        } catch (ApiException e) {
+            log.error("❌ AI API 调用异常: code={}, message={}", e.getStatus().getCode(), e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.error("❌ AI 调用发生未知错误", e);
             return null;
         }
+
     }
 
     /**
@@ -228,7 +235,7 @@ public class AiAnalysisService {
 - "被连累"只给在败方里数据明显完成职责、但团队整体明显失衡的人。
 - "被爆"优先看高死亡、低经济占比、低输出占比、低参团，或者同队里明显拖后腿。
 - 允许结论为"无人明显犯罪"或"多人都尽力"。
-- 语气直接，纯锐评，突出一针见血。
+- 语气直接，不中立纯锐评。
 
 【对局信息】
 队列ID：%d
@@ -292,10 +299,10 @@ public class AiAnalysisService {
                 .collect(Collectors.toList());
 
         return """
-你是 LOL 单人复盘分析师。请围绕指定玩家，判断他这局到底属于"尽力、犯罪、被爆、被连累、正常发挥"中的哪一类。
+你是 LOL 单人复盘分析师。请围绕指定玩家，判断他这局到底属于"尽力、犯罪、被爆、被连累、正常发挥、carry全场"中的哪一类。
 
 【硬性要求】
-- 必须先给出唯一主标签，只能从：尽力 / 犯罪 / 被爆 / 被连累 / 正常发挥 中选一个。
+- 必须先给出唯一主标签，只能从：尽力 / 犯罪 / 被爆 / 被连累 / 正常发挥 / carry全场 中选一个。
 - 所有结论必须基于数据，至少引用 3 个具体指标。
 - 要区分"自己打得差"和"队友整体拖垮"这两种情况。
 - 如果是海克斯/强化模式，请结合强化数量和构筑方向，判断是否成型。
@@ -319,7 +326,7 @@ public class AiAnalysisService {
 请严格按这个结构输出：
 
 ## 玩家判定
-- 先写：名字 + 主标签。
+- 先写：名字  主标签。
 
 ## 为什么这么判
 - 用 3-4 条 bullet 解释，必须带数字。
@@ -328,7 +335,7 @@ public class AiAnalysisService {
 - 说明是自己打出来的、被针对的、还是被队友带飞/拖累。
 
 ## 一句话锐评
-- 用一句短评收尾，允许直接一点，纯锐评。
+- 用一句短评收尾，不中立纯锐评。
 """.formatted(
                 gameDetail.getGameMode(),
                 gameDetail.getGameDuration() / 60,

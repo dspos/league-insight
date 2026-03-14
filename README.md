@@ -166,24 +166,24 @@
 ### 后端技术栈
 
 | 技术                   | 版本      | 说明                 |
-| -------------------- | ------- | ------------------ |
+|----------------------|---------|--------------------|
 | **Java**             | 21      | 支持 Virtual Threads |
 | **GraalVM**          | 21.0.10 | Native Image 编译    |
 | **Spring Boot**      | 3.5.11  | 核心框架               |
 | **Spring WebSocket** | -       | WebSocket 支持       |
-| **Spring AOP**       | -       | AOP 切面编程          |
+| **Spring AOP**       | -       | AOP 切面编程           |
 | **OkHttp**           | 4.12.0  | HTTP 客户端           |
 | **Java-WebSocket**   | 1.5.5   | WebSocket 客户端      |
 | **Caffeine**         | 3.1.8   | 高性能缓存              |
 | **JNA**              | 5.14.0  | Windows 进程 API 调用  |
 | **Lombok**           | -       | 代码简化               |
 | **Jackson**          | -       | JSON/YAML 序列化      |
-| **AspectJ**          | 1.9.25  | 切面编程支持            |
+| **AspectJ**          | 1.9.25  | 切面编程支持             |
 
 ### 前端技术栈
 
 | 技术             | 版本     | 说明            |
-| -------------- | ------ | ------------- |
+|----------------|--------|---------------|
 | **Electron**   | 28.0.0 | 桌面应用框架        |
 | **Vue**        | 3.3.11 | 前端框架          |
 | **TypeScript** | 5.3.3  | 类型支持          |
@@ -202,7 +202,7 @@
 ```
 league-insight-backend/
 ├── src/main/java/com/ekko/insight/
-│   ├── RankAnalysisApplication.java    # 启动类
+│   ├── LeagueInsightApplication.java    # 启动类
 │   │
 │   ├── config/                          # 配置类
 │   │   ├── AppConfig.java               # 应用配置
@@ -1260,10 +1260,9 @@ public class PerformanceMonitorAspect {
 
 | 版本    | 日期      | 更新内容                                   |
 |-------|---------|----------------------------------------|
-| 1.0.0 | 2026-03 | 初始版本                                   |
-| 1.1.0 | 2026-03 | 新增 AI 分析功能、游戏进行中页面、海克斯强化识别             |
-| 1.2.0 | 2026-03 | 改用 GraalVM Native Image 编译，无需 JRE 独立运行 |
-| 1.3.0 | 2026-03 | 新增 AI 房间分析功能、自动化延迟时间配置、优化 LCU 连接监控     |
+| 0.0.1 | 2026-03 | 初始版本                                   |
+| 0.0.2 | 2026-03 | 改用 GraalVM Native Image 编译，无需 JRE 独立运行 |
+| 0.0.3 | 2026-03 | 新增 AI 分析功能、自动化延迟时间配置、优化 LCU 连接监控       |
 
 ***
 

@@ -7,7 +7,7 @@ const router = useRouter()
 
 const menuItems = [
   { path: '/', icon: '🏠', label: '首页' },
-  { path: '/gaming', icon: '🎮', label: '游戏进行中' },
+  { path: '/gaming', icon: '🎮', label: '对战信息' },
   { path: '/summoner', icon: '👤', label: '战绩查询' },
   { path: '/match-history', icon: '📊', label: '召唤师信息' },
   { path: '/user-tag', icon: '🏷️', label: '标签分析' },
@@ -41,7 +41,7 @@ function navigateTo(path: string) {
     </nav>
 
     <div class="sidebar-footer">
-      <div class="version">v1.0.0</div>
+      <div class="version">v0.0.3</div>
     </div>
   </aside>
 </template>

@@ -13,7 +13,7 @@
 
     <groupId>com.ekko.insight</groupId>
     <artifactId>league-insight-backend</artifactId>
-    <version>1.0.0</version>
+    <version>0.0.3</version>
     <name>league-insight-backend</name>
     <description>英雄联盟战绩查询工具后端</description>
 
@@ -189,7 +189,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <mainClass>com.ekko.insight.RankAnalysisApplication</mainClass>
+                            <mainClass>com.ekko.insight.LeagueInsightApplication</mainClass>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <imageName>league-insight-native</imageName>
                             <buildArgs>

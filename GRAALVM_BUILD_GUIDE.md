@@ -96,7 +96,7 @@ native-image --version
                         </execution>
                     </executions>
                     <configuration>
-                        <mainClass>com.ekko.insight.RankAnalysisApplication</mainClass>
+                        <mainClass>com.ekko.insight.LeagueInsightApplication</mainClass>
                         <imageName>league-insight-native</imageName>
                         <buildArgs>
                             <!-- 基础配置 -->

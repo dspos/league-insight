@@ -15,7 +15,7 @@ set "BACKEND_DIR=%ROOT_DIR%league-insight-backend"
 set "FRONTEND_DIR=%ROOT_DIR%league-insight-fronted"
 
 :: 设置 GraalVM 路径
-set "GRAALVM_HOME=C:\Users\ekko\Downloads\graalvm-jdk-21_windows-x64_bin\graalvm-jdk-21.0.10+8.1"
+set "GRAALVM_HOME=C:\develop\graalvm-jdk-21.0.10+8.1"
 set "JAVA_HOME=%GRAALVM_HOME%"
 set "PATH=%GRAALVM_HOME%\bin;%PATH%"
 

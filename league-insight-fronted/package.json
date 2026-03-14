@@ -1,6 +1,6 @@
 {
   "name": "league-insight-fronted",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "description": "英雄联盟战绩查询工具",
   "author": "ekko",
   "main": "dist/main/main.js",

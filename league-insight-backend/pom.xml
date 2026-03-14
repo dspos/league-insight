@@ -13,7 +13,7 @@
 
     <groupId>com.ekko.insight</groupId>
     <artifactId>league-insight-backend</artifactId>
-    <version>1.0.0</version>
+    <version>0.0.3</version>
     <name>league-insight-backend</name>
     <description>英雄联盟战绩查询工具后端</description>
 
@@ -85,6 +85,14 @@
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/com.alibaba/dashscope-sdk-java -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>dashscope-sdk-java</artifactId>
+            <version>2.22.11</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Lombok (编译时) -->
@@ -189,15 +197,27 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <mainClass>com.ekko.insight.RankAnalysisApplication</mainClass>
+                            <mainClass>com.ekko.insight.LeagueInsightApplication</mainClass>
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <imageName>league-insight-native</imageName>
                             <buildArgs>
+                                <!-- 基础配置 -->
                                 <buildArg>--no-fallback</buildArg>
                                 <buildArg>-H:EnableURLProtocols=http,https</buildArg>
-                                <buildArg>-H:+ReportExceptionStackTraces</buildArg>
                                 <buildArg>-H:+AddAllCharsets</buildArg>
                                 <buildArg>-H:IncludeResources=application\.yml</buildArg>
+
+                                <!-- ========== 生产优化配置 ========== -->
+                                <!-- 优化级别: b=速度优化, 2=平衡优化, 3=体积优化 -->
+                                <buildArg>-Ob</buildArg>
+
+                                <!-- GC 配置: serial 适合单应用，内存占用更小 -->
+                                <buildArg>--gc=serial</buildArg>
+
+                                <!-- 优化级别: b=速度优化, 2=平衡优化, 3=体积优化 -->
+                                <buildArg>-Ob</buildArg>
+
+                                <!-- 初始化配置 -->
                                 <!-- SLF4J 在构建时初始化 -->
                                 <buildArg>--initialize-at-build-time=org.slf4j.LoggerFactory</buildArg>
                                 <!-- OkHttp 在运行时初始化 -->
@@ -217,6 +237,7 @@
                                 <buildArg>--initialize-at-run-time=com.ekko.insight.jna.Kernel32</buildArg>
                                 <buildArg>--initialize-at-run-time=com.ekko.insight.jna.Ntdll</buildArg>
                                 <buildArg>--initialize-at-run-time=com.ekko.insight.jna.ProcessUtils</buildArg>
+
                                 <!-- 配置文件路径 -->
                                 <buildArg>-H:ReflectionConfigurationFiles=${project.basedir}/src/main/resources/META-INF/native-image/reflect-config.json</buildArg>
                                 <buildArg>-H:DynamicProxyConfigurationFiles=${project.basedir}/src/main/resources/META-INF/native-image/proxy-config.json</buildArg>

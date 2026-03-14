@@ -17,7 +17,12 @@
           <span class="queue-name">{{ sessionData.typeCn || '未知模式' }}</span>
         </div>
         <div class="header-actions">
-          <button class="ai-btn" @click="analyzeSession('team')" :disabled="isAnalyzing">
+          <button
+            class="ai-btn"
+            @click="analyzeSession('team')"
+            :disabled="isAnalyzing || !canAnalyze"
+            :title="canAnalyze ? '分析双方队伍数据' : '等待双方数据加载完成...'"
+          >
             <span v-if="isAnalyzing" class="loading-spinner small"></span>
             <span v-else>🤖</span>
             <span>AI 分析</span>
@@ -49,16 +54,26 @@
             <span class="team-icon">⚔</span>
             我方队伍
           </div>
-          <div class="team-players">
-            <PlayerCard
-              v-for="(player, idx) in sessionData.teamOne"
-              :key="'blue-' + idx"
-              :session-summoner="player"
-              team="blue"
-              @navigate-to-player="handleNavigateToPlayer"
-              @analyze-result="handleAnalyzeResult"
-            />
-          </div>
+          <!-- 无对局时显示占位 -->
+          <template v-if="!sessionData.teamOne || sessionData.teamOne.length === 0">
+            <div class="team-placeholder team-placeholder-blue">
+              <span class="placeholder-icon">👀</span>
+              <span>等待加入游戏...</span>
+            </div>
+          </template>
+          <!-- 正常显示我方 -->
+          <template v-else>
+            <div class="team-players">
+              <PlayerCard
+                v-for="(player, idx) in sessionData.teamOne"
+                :key="'blue-' + idx"
+                :session-summoner="player"
+                team="blue"
+                @navigate-to-player="handleNavigateToPlayer"
+                @analyze-result="handleAnalyzeResult"
+              />
+            </div>
+          </template>
         </div>
 
         <!-- 敌方 -->
@@ -148,6 +163,12 @@ const phaseClass = computed(() => {
   if (phase === 'ChampSelect') return 'phase-select'
   if (phase === 'EndOfGame') return 'phase-ended'
   return ''
+})
+
+// 双方数据是否都已加载完成
+const canAnalyze = computed(() => {
+  return sessionData.value.teamOne?.length > 0 &&
+         sessionData.value.teamTwo?.length > 0
 })
 
 // 获取会话数据
@@ -352,8 +373,11 @@ onUnmounted(() => {
 }
 
 .ai-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.5;
   cursor: not-allowed;
+  background: rgba(128, 128, 128, 0.2);
+  border-color: rgba(128, 128, 128, 0.3);
+  color: var(--text-secondary);
 }
 
 .loading-spinner.small {
@@ -608,6 +632,24 @@ onUnmounted(() => {
   border: 1px dashed rgba(239, 68, 68, 0.3);
   color: var(--text-tertiary);
   font-size: 14px;
+}
+
+/* 我方占位 - 绿色底色 */
+.team-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.team-placeholder-blue {
+  background: rgba(61, 155, 122, 0.08);
+  border: 1px dashed rgba(61, 155, 122, 0.4);
+  color: var(--text-secondary);
 }
 
 .placeholder-icon {

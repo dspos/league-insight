@@ -16,16 +16,9 @@ const editType = ref<'pick' | 'ban'>('pick')
 const searchQuery = ref('')
 const selectedChampions = ref<number[]>([])
 
-// 延迟时间输入
-const matchDelayInput = ref(0)
-const acceptDelayInput = ref(0)
-
 onMounted(async () => {
   await automationStore.init()
   await loadChampions()
-  // 同步延迟时间输入
-  matchDelayInput.value = automationStore.autoMatchDelay
-  acceptDelayInput.value = automationStore.autoAcceptDelay
 })
 
 // 加载英雄列表
@@ -115,16 +108,14 @@ function getChampionName(id: number): string {
 }
 
 // 更新延迟时间
-async function updateMatchDelay() {
-  const delay = Math.max(0, Math.min(10, matchDelayInput.value))
-  matchDelayInput.value = delay
-  await automationStore.updateAutoMatchDelay(delay)
+async function updateMatchDelay(delay: number) {
+  const validDelay = Math.max(0, Math.min(10, delay))
+  await automationStore.updateAutoMatchDelay(validDelay)
 }
 
-async function updateAcceptDelay() {
-  const delay = Math.max(0, Math.min(10, acceptDelayInput.value))
-  acceptDelayInput.value = delay
-  await automationStore.updateAutoAcceptDelay(delay)
+async function updateAcceptDelay(delay: number) {
+  const validDelay = Math.max(0, Math.min(10, delay))
+  await automationStore.updateAutoAcceptDelay(validDelay)
 }
 
 const toggleItems = [
@@ -134,7 +125,7 @@ const toggleItems = [
     description: '在大厅时自动开始匹配，取消匹配后自动禁用',
     value: automationStore.autoMatch,
     toggle: () => automationStore.setAutoMatch(!automationStore.autoMatch),
-    delayValue: matchDelayInput,
+    delayValue: automationStore.autoMatchDelay,
     delayKey: 'matchDelay',
     delayLabel: '延迟时间',
     delayUnit: '秒',
@@ -146,7 +137,7 @@ const toggleItems = [
     description: '匹配成功后自动接受',
     value: automationStore.autoAccept,
     toggle: () => automationStore.setAutoAccept(!automationStore.autoAccept),
-    delayValue: acceptDelayInput,
+    delayValue: automationStore.autoAcceptDelay,
     delayKey: 'acceptDelay',
     delayLabel: '延迟时间',
     delayUnit: '秒',
@@ -196,8 +187,8 @@ const toggleItems = [
               <label class="delay-label">{{ item.delayLabel }}</label>
               <input
                 type="number"
-                v-model.number="item.delayValue.value"
-                @change="item.onDelayChange"
+                :value="item.delayValue"
+                @input="e => item.onDelayChange(Number((e.target as HTMLInputElement).value))"
                 min="0"
                 max="10"
                 class="delay-input"

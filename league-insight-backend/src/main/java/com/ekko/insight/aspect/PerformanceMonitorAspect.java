@@ -147,7 +147,7 @@ public class PerformanceMonitorAspect {
         }
 
         /**
-         * 转换为人类可读格式
+         * 格式化
          */
         public String toSummary() {
             return String.format(

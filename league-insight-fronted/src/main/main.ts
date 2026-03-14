@@ -28,10 +28,12 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: join(__dirname, '../preload/preload.js'),
-      webSecurity: true
+      webSecurity: true,
+      spellcheck: false
     },
     icon: iconPath,
-    titleBarStyle: 'hiddenInset'
+    titleBarStyle: 'hidden',
+    thickFrame: true
   })
 
   // 开发模式加载 Vite 开发服务器

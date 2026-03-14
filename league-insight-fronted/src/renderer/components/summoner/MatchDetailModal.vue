@@ -314,17 +314,82 @@
       <button class="close-btn" @click="close">&times;</button>
 
       <!-- AI 分析按钮 -->
-      <button class="ai-btn" @click="openAiModal" title="AI 复盘">
-        🤖
+      <button
+        class="ai-btn"
+        :class="{ 'has-result': aiAnalysisDone, 'analyzing': aiLoading }"
+        @click="openAiModal"
+        :title="aiAnalysisDone ? '点击查看 AI 分析结果' : (aiLoading ? 'AI 分析中...' : 'AI 复盘')"
+      >
+        <span v-if="aiLoading" class="ai-spinner"></span>
+        <span v-else-if="aiAnalysisDone">📝</span>
+        <span v-else>🤖</span>
       </button>
     </div>
 
-    <!-- AI 分析弹窗 -->
-    <div v-if="showAiModal" class="ai-modal-overlay" @click.self="showAiModal = false">
+    <!-- AI 选择弹窗 -->
+    <div v-if="showAiSelector" class="ai-modal-overlay" @click.self="showAiSelector = false">
+      <div class="ai-modal ai-selector-modal">
+        <div class="ai-modal-header">
+          <h3>选择 AI 分析类型</h3>
+          <button class="ai-modal-close" @click="showAiSelector = false">&times;</button>
+        </div>
+
+        <div class="ai-selector-content">
+          <div class="ai-selector-options">
+            <div
+              class="ai-selector-option"
+              :class="{ active: aiMode === 'overview' }"
+              @click="aiMode = 'overview'"
+            >
+              <span class="option-radio">
+                <input type="radio" value="overview" v-model="aiMode" />
+              </span>
+              <span class="option-icon">📊</span>
+              <span class="option-text">
+                <span class="option-title">整局总览</span>
+                <span class="option-desc">分析全场对局数据，包括双方队伍表现</span>
+              </span>
+            </div>
+            <div
+              class="ai-selector-option"
+              :class="{ active: aiMode === 'player' }"
+              @click="aiMode = 'player'"
+            >
+              <span class="option-radio">
+                <input type="radio" value="player" v-model="aiMode" />
+              </span>
+              <span class="option-icon">👤</span>
+              <span class="option-text">
+                <span class="option-title">单人复盘</span>
+                <span class="option-desc">针对指定玩家进行深度分析</span>
+              </span>
+            </div>
+          </div>
+
+          <div v-if="aiMode === 'player'" class="ai-player-select">
+            <span class="select-label">选择玩家：</span>
+            <select v-model="aiTargetParticipantId">
+              <option v-for="opt in aiPlayerOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ai-selector-footer">
+          <button class="ai-run-btn" @click="startAiAnalysis" :disabled="aiMode === 'player' && !aiTargetParticipantId">
+            开始分析
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 结果弹窗 -->
+    <div v-if="showAiResultModal" class="ai-modal-overlay" @click.self="showAiResultModal = false">
       <div class="ai-modal">
         <div class="ai-modal-header">
           <h3>AI 复盘分析</h3>
-          <button class="ai-modal-close" @click="showAiModal = false">&times;</button>
+          <button class="ai-modal-close" @click="showAiResultModal = false">&times;</button>
         </div>
 
         <div class="ai-modal-controls">
@@ -341,8 +406,8 @@
               {{ opt.label }}
             </option>
           </select>
-          <button class="ai-run-btn" @click="runAiAnalysis" :disabled="aiLoading">
-            {{ aiLoading ? '分析中...' : '开始分析' }}
+          <button class="ai-run-btn" @click="runAiAnalysis" :disabled="aiLoading || (aiMode === 'player' && !aiTargetParticipantId)">
+            {{ aiLoading ? '分析中...' : (aiAnalysisDone && !aiSettingsChanged ? '重新分析' : '开始分析') }}
           </button>
         </div>
 
@@ -389,13 +454,59 @@ const emit = defineEmits<{
   navigateToPlayer: [gameName: string, tagLine: string]
 }>()
 
-// AI 分析相关
-const showAiModal = ref(false)
+// AI 分析相关 - 按对局存储状态
+interface AiAnalysisState {
+  loading: boolean
+  result: string | null
+  error: string | null
+  done: boolean
+  mode: 'overview' | 'player'
+  targetId: number | null
+}
+
+const showAiSelector = ref(false)  // 选择弹窗
+const showAiResultModal = ref(false)  // 结果弹窗
 const aiMode = ref<'overview' | 'player'>('overview')
 const aiTargetParticipantId = ref<number | null>(null)
-const aiLoading = ref(false)
-const aiResult = ref<string | null>(null)
-const aiError = ref<string | null>(null)
+
+// 按 gameId 存储分析状态
+const aiStateMap = ref<Map<number, AiAnalysisState>>(new Map())
+
+// 当前对局的分析状态
+const currentAiState = computed(() => {
+  const gameId = props.gameDetail?.gameId
+  if (!gameId) return null
+  return aiStateMap.value.get(gameId)
+})
+
+const aiLoading = computed(() => currentAiState.value?.loading ?? false)
+const aiResult = computed(() => currentAiState.value?.result ?? null)
+const aiError = computed(() => currentAiState.value?.error ?? null)
+const aiAnalysisDone = computed(() => currentAiState.value?.done ?? false)
+
+// 检测 AI 设置是否发生变化
+const aiSettingsChanged = computed(() => {
+  const state = currentAiState.value
+  if (!state) return false
+  return aiMode.value !== state.mode || aiTargetParticipantId.value !== state.targetId
+})
+
+// 获取或创建对局的分析状态
+function getOrCreateAiState(gameId: number): AiAnalysisState {
+  let state = aiStateMap.value.get(gameId)
+  if (!state) {
+    state = {
+      loading: false,
+      result: null,
+      error: null,
+      done: false,
+      mode: 'overview',
+      targetId: null
+    }
+    aiStateMap.value.set(gameId, state)
+  }
+  return state
+}
 
 // 是否是强化模式（竞技场/海克斯乱斗）
 const isAugmentMode = computed(() => {
@@ -434,30 +545,40 @@ const aiPlayerOptions = computed(() => {
   }))
 })
 
-// 运行 AI 分析
+// 运行 AI 分析（后台执行）
 async function runAiAnalysis() {
   if (!props.gameDetail) return
 
-  aiLoading.value = true
-  aiError.value = null
-  aiResult.value = null
+  const gameId = props.gameDetail.gameId
+  const state = getOrCreateAiState(gameId)
+
+  if (state.loading) return
+
+  state.loading = true
+  state.error = null
+  state.result = null
 
   try {
     const result: AIAnalysisResult = await apiClient.analyzeGameDetail({
-      gameId: props.gameDetail.gameId,
+      gameId: gameId,
       mode: aiMode.value,
       participantId: aiTargetParticipantId.value ?? undefined
     })
 
     if (result.success && result.content) {
-      aiResult.value = result.content
+      state.result = result.content
     } else {
-      aiError.value = result.error || '分析失败'
+      state.error = result.error || '分析失败'
     }
+    // 记录当前设置
+    state.mode = aiMode.value
+    state.targetId = aiTargetParticipantId.value
+    state.done = true
   } catch (e: any) {
-    aiError.value = e.message || '网络请求失败'
+    state.error = e.message || '网络请求失败'
+    state.done = true
   } finally {
-    aiLoading.value = false
+    state.loading = false
   }
 }
 
@@ -473,11 +594,35 @@ const renderedAiResult = computed(() => {
     .replace(/\n/g, '<br>')
 })
 
-// 打开 AI 分析弹窗
+// 打开 AI 分析弹窗或触发后台分析
 function openAiModal() {
-  showAiModal.value = true
-  aiResult.value = null
-  aiError.value = null
+  const gameId = props.gameDetail?.gameId
+  if (!gameId) return
+
+  // 如果正在分析中，直接返回
+  if (aiLoading.value) return
+
+  // 加载当前对局的设置
+  const state = getOrCreateAiState(gameId)
+  aiMode.value = state.mode
+  aiTargetParticipantId.value = state.targetId
+
+  // 如果已有分析结果，直接显示结果弹窗
+  if (aiAnalysisDone.value) {
+    showAiResultModal.value = true
+    return
+  }
+
+  // 没有结果，显示选择弹窗
+  showAiSelector.value = true
+}
+
+// 开始 AI 分析（从选择弹窗调用）
+async function startAiAnalysis() {
+  // 关闭选择弹窗
+  showAiSelector.value = false
+  // 开始后台分析
+  await runAiAnalysis()
 }
 
 // 获取当前玩家
@@ -1177,10 +1322,155 @@ function handlePlayerClick(player: PlayerWithIdentity) {
   align-items: center;
   justify-content: center;
   z-index: 10;
+  transition: all 0.2s;
 }
 
-.ai-btn:hover {
+.ai-btn:hover:not(:disabled) {
   background: rgba(99, 216, 180, 0.4);
+}
+
+.ai-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* 分析中状态 */
+.ai-btn.analyzing {
+  background: rgba(99, 216, 180, 0.3);
+}
+
+.ai-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #63d8b4;
+  border-radius: 50%;
+  animation: ai-spin 1s linear infinite;
+}
+
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 分析完成状态 */
+.ai-btn.has-result {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.15));
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  color: #a78bfa;
+  animation: ai-pulse-glow 2s ease-in-out infinite;
+}
+
+.ai-btn.has-result:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(139, 92, 246, 0.3));
+  border-color: rgba(139, 92, 246, 0.7);
+  transform: scale(1.05);
+}
+
+@keyframes ai-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+  }
+}
+
+/* AI 选择弹窗 */
+.ai-selector-modal {
+  max-width: 400px;
+}
+
+.ai-selector-content {
+  padding: 20px;
+}
+
+.ai-selector-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-selector-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-selector-option:hover {
+  border-color: rgba(99, 216, 180, 0.5);
+}
+
+.ai-selector-option.active {
+  border-color: #63d8b4;
+  background: rgba(99, 216, 180, 0.1);
+}
+
+.option-radio {
+  flex-shrink: 0;
+}
+
+.option-radio input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.option-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.option-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.option-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ai-player-select {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.select-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ai-player-select select {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.ai-selector-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* AI 分析弹窗 */

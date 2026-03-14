@@ -108,45 +108,88 @@ public class FandomService {
      */
     private int parseLuaToAramData(String luaScript) {
         Map<Integer, AramBalanceData> newDataMap = new HashMap<>();
-
-        // 步骤 1: 匹配英雄定义块
-        // 匹配模式: ["Name"] = { ... }
-        // 我们需要手动处理大括号的嵌套，因为正则很难完美匹配多层嵌套
         int count = 0;
+        int skipCount = 0;
 
-        // 简单的状态机来分割英雄块
-        // 寻找 pattern: ["Key"] = {
+        // 匹配模式: ["Key"] = {
         Pattern headerPattern = Pattern.compile("\\[\"([^\"]+)\"\\]\\s*=\\s*\\{");
         Matcher matcher = headerPattern.matcher(luaScript);
 
         while (matcher.find()) {
+            String keyName = matcher.group(1);
+
+            // 🛡️ 防御性编程 1: 过滤掉明显的非英雄 Key
+            // 英雄名通常首字母大写，且不是保留关键字
+            if (keyName.length() < 2 ||
+                    keyName.equals("stats") ||
+                    keyName.equals("aram") ||
+                    keyName.equals("data") ||
+                    keyName.equals("__index") ||
+                    keyName.equals("consts") ||
+                    keyName.equals("urf") ||
+                    keyName.equals("id") ||
+                    keyName.equals("apiname")) {
+                log.trace("跳过非英雄键: {}", keyName);
+                continue;
+            }
+
+            // 额外检查：英雄名应该以字母开头，且首字母大写
+            if (!Character.isUpperCase(keyName.charAt(0))) {
+                log.trace("跳过非英雄键（首字母非大写）: {}", keyName);
+                continue;
+            }
+
             int start = matcher.end(); // 跳过 {
-            String championName = matcher.group(1);
 
-            // 寻找对应的闭合括号 }
+            // 🛡️ 防御性编程 2: 安全地寻找闭合括号
             int end = findMatchingBrace(luaScript, start);
-            if (end == -1) continue;
 
-            String championBlock = luaScript.substring(start, end);
+            // 如果找不到闭合括号，或者索引越界，直接跳过
+            if (end == -1 || end <= start || end > luaScript.length()) {
+                log.warn("格式错误：无法找到键 [{}] 的闭合括号，或索引越界 (start={}, end={})", keyName, start, end);
+                continue;
+            }
+
+            // 🛡️ 防御性编程 3: 安全的 substring
+            String championBlock;
+            try {
+                championBlock = luaScript.substring(start, end);
+            } catch (Exception e) {
+                log.error("截取字符串失败: start={}, end={}, length={}", start, end, luaScript.length(), e);
+                continue;
+            }
 
             // 步骤 2: 从块中提取 ID
             Integer id = extractId(championBlock);
-            if (id == null) continue;
+
+            // 如果没有 ID，跳过
+            if (id == null) {
+                log.debug("跳过 [{}]: 未找到 ID", keyName);
+                skipCount++;
+                continue;
+            }
 
             // 步骤 3: 提取 aram 块
             String aramLua = extractAramBlock(championBlock);
-            if (aramLua == null || aramLua.trim().isEmpty()) continue;
+            if (aramLua == null || aramLua.trim().isEmpty()) {
+                log.trace("英雄 [{}] (ID: {}) 无 ARAM 数据", keyName, id);
+                continue;
+            }
 
             // 步骤 4: 转换并解析
             try {
                 AramBalanceData data = parseAramJson(aramLua);
-                if (data != null) {
+                if (data != null && data.hasData()) {
                     data.setChampionId(id);
+                    data.setChampionName(keyName);
                     newDataMap.put(id, data);
                     count++;
+                    log.debug("成功解析英雄: {} (ID: {}) - 字段: {}", keyName, id, data.getAllFields().keySet());
+                } else {
+                    log.trace("英雄 [{}] (ID: {}) ARAM 数据为空", keyName, id);
                 }
             } catch (Exception e) {
-                log.warn("解析英雄 {} (ID: {}) 的 ARAM 数据失败: {}", championName, id, e.getMessage());
+                log.warn("解析英雄 {} (ID: {}) 的 ARAM 数据失败: {}", keyName, id, e.getMessage());
             }
         }
 
@@ -154,7 +197,7 @@ public class FandomService {
         aramCache.invalidateAll();
         newDataMap.forEach(aramCache::put);
 
-        log.info("解析完成，共处理 {} 个英雄，缓存大小: {}", count, aramCache.estimatedSize());
+        log.info("✅ ARAM 数据解析完成：成功 {} 个英雄，跳过 {} 个无效块，缓存大小: {}", count, skipCount, aramCache.estimatedSize());
         return count;
     }
 
@@ -206,39 +249,75 @@ public class FandomService {
     }
 
     private Integer extractId(String block) {
-        Pattern idPattern = Pattern.compile("id\\s*=\\s*(\\d+)");
-        Matcher m = idPattern.matcher(block);
-        if (m.find()) {
-            return Integer.parseInt(m.group(1));
+        // 模式 1: ["id"] = 123 (Fandom 标准写法)
+        Pattern p1 = Pattern.compile("\\[\"id\"\\]\\s*=\\s*(\\d+)");
+        Matcher m1 = p1.matcher(block);
+        if (m1.find()) {
+            return Integer.parseInt(m1.group(1));
         }
+
+        // 模式 2: id = 123 (备用)
+        Pattern p2 = Pattern.compile("\\bid\\s*=\\s*(\\d+)");
+        Matcher m2 = p2.matcher(block);
+        if (m2.find()) {
+            return Integer.parseInt(m2.group(1));
+        }
+
+        // 模式 3: ["id"] = data[123] (提取方括号内的数字)
+        Pattern p3 = Pattern.compile("\\[\"id\"\\]\\s*=\\s*(?:data|ids)\\s*\\[\\s*(\\d+)\\s*\\]");
+        Matcher m3 = p3.matcher(block);
+        if (m3.find()) {
+            return Integer.parseInt(m3.group(1));
+        }
+
         return null;
     }
 
     private String extractAramBlock(String block) {
-        // 尝试匹配 aram = { ... }
-        Pattern aramStartPattern = Pattern.compile("aram\\s*=\\s*\\{");
-        Matcher m = aramStartPattern.matcher(block);
+        // 步骤 1: 先查找 stats 子表
+        Pattern statsPattern = Pattern.compile("\\[\"stats\"\\]\\s*=\\s*\\{");
+        Matcher statsMatcher = statsPattern.matcher(block);
 
-        if (!m.find()) {
-            // 如果没有找到 {，检查是否是 aram = , (空值)
-            if (block.contains("aram") && block.matches(".*aram\\s*=\\s*,.*")) {
-                return "{}"; // 返回空 JSON 对象
-            }
+        if (!statsMatcher.find()) {
+            log.trace("未找到 stats 子表");
             return null;
         }
 
-        int start = m.end();
-        int end = findMatchingBrace(block, start);
+        int statsStart = statsMatcher.end();
+        int statsEnd = findMatchingBrace(block, statsStart);
 
-        if (end == -1) {
-            // 如果找不到匹配的括号，可能是格式错误，尝试返回空
-            log.warn("未找到 aram 块的闭合括号，视为空块");
+        if (statsEnd == -1) {
+            log.debug("未找到 stats 块的闭合括号");
+            return null;
+        }
+
+        String statsBlock = block.substring(statsStart, statsEnd);
+
+        // 步骤 2: 在 stats 块中查找 aram 子表
+        Pattern aramStartPattern = Pattern.compile("\\[\"aram\\s*\"\\]\\s*=\\s*\\{");
+        Matcher aramMatcher = aramStartPattern.matcher(statsBlock);
+
+        if (!aramMatcher.find()) {
+            // 尝试不带引号的写法
+            Pattern simplePattern = Pattern.compile("aram\\s*=\\s*\\{");
+            Matcher simpleMatcher = simplePattern.matcher(statsBlock);
+            if (!simpleMatcher.find()) {
+                log.trace("在 stats 块中未找到 aram 子表");
+                return null;
+            }
+            aramMatcher = simpleMatcher;
+        }
+
+        int aramStart = aramMatcher.end();
+        int aramEnd = findMatchingBrace(statsBlock, aramStart);
+
+        if (aramEnd == -1) {
+            log.debug("未找到 aram 块的闭合括号");
             return "{}";
         }
 
-        String content = block.substring(start, end).trim();
+        String content = statsBlock.substring(aramStart, aramEnd).trim();
 
-        // 如果是空块 {}
         if (content.isEmpty()) {
             return "{}";
         }
@@ -252,90 +331,60 @@ public class FandomService {
      */
     private AramBalanceData parseAramJson(String luaContent) throws Exception {
         if (luaContent == null || luaContent.trim().isEmpty() || "{}".equals(luaContent.trim())) {
-            return null; // 空数据直接返回
+            return null;
         }
 
-        // 1. 移除单行注释 (-- ...)
-        // 注意：要排除掉字符串内的 --，但简单场景下直接移除通常够用
-        // 更严谨的做法是按行处理，如果在字符串外才移除
+        // 1. 移除注释
         String clean = luaContent.replaceAll("--[^\n]*", "");
-
-        // 2. 移除多行注释 (--[[ ... ]]) - 简单处理
         clean = clean.replaceAll("--\\[\\[.*?\\]\\]", "");
 
-        // 3. 预处理：移除那些 key = 后面没有有效值的行 (防止生成 "key": , )
-        // 匹配: 单词 = (后面紧跟逗号、换行或右大括号)
-        // 我们只保留 key = number 或 key = "string" 的行
-        StringBuilder validLines = new StringBuilder();
-        String[] lines = clean.split("\n");
+        // 2. 清洗 Key 的格式 (["key"] -> key)
+        Pattern keyPattern = Pattern.compile("\\[\"([^\"]+)\"\\]\\s*=");
+        clean = keyPattern.matcher(clean).replaceAll("$1 =");
 
-        // 定义合法值的正则：数字 (含小数/负数) 或 双引号字符串
-        Pattern validValuePattern = Pattern.compile("^\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*(-?\\d+(\\.\\d+)?|\"[^\"]*\")\\s*,?\\s*$");
+        // 3. 过滤并收集所有键值对
+        Map<String, Double> fieldValues = new HashMap<>();
+        String[] lines = clean.split("\n");
+        // 匹配 key = number (支持整数、小数、负数)
+        Pattern kvPattern = Pattern.compile("^\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*(-?\\d+(?:\\.\\d+)?)\\s*,?\\s*$");
 
         for (String line : lines) {
             line = line.trim();
             if (line.isEmpty()) continue;
 
-            // 如果行符合合法模式，保留
-            if (validValuePattern.matcher(line).matches()) {
-                validLines.append(line).append("\n");
-            } else {
-                // 可选：打印调试日志，看看丢弃了什么
-                // log.trace("丢弃非法 Lua 行: {}", line);
+            Matcher m = kvPattern.matcher(line);
+            if (m.find()) {
+                String key = m.group(1);
+                Double value = Double.parseDouble(m.group(2));
+                fieldValues.put(key, value);
+                log.trace("解析到字段: {} = {}", key, value);
             }
         }
 
-        clean = validLines.toString();
-        if (clean.trim().isEmpty()) {
+        if (fieldValues.isEmpty()) {
+            log.debug("未解析到任何字段");
             return null;
         }
 
-        // 4. 将 Lua 键值对转换为 JSON 格式
-        // 匹配: key = value -> "key": value
-        // 这里的 value 已经是经过筛选的数字或字符串了
-        Pattern kvPattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*");
-        String jsonLike = kvPattern.matcher(clean).replaceAll("\"$1\": ");
+        // 4. 构建 AramBalanceData
+        AramBalanceData data = new AramBalanceData();
 
-        // 5. 处理尾随逗号 (JSON 不允许)
-        // 替换 }, 为 }
-        jsonLike = jsonLike.replaceAll(",\\s*}", "}");
-        // 替换 ], 为 ] (以防万一有数组)
-        jsonLike = jsonLike.replaceAll(",\\s*]", "]");
-        // 处理可能出现的 ,\n} 情况
-        jsonLike = jsonLike.replaceAll(",\\s*\n\\s*}", "\n}");
+        // 映射已知字段
+        for (Map.Entry<String, Double> entry : fieldValues.entrySet()) {
+            String key = entry.getKey();
+            Double value = entry.getValue();
+            data.setField(key, value);
+        }
 
-        String finalJson = "{" + jsonLike + "}";
+        log.debug("解析结果: {} 个字段 - {}", fieldValues.size(), fieldValues.keySet());
 
-        // 6. 使用 Jackson 解析
-        try {
-            JsonNode node = objectMapper.readTree(finalJson);
-            AramBalanceData data = new AramBalanceData();
-
-            // 映射字段 (保持与你原有逻辑一致)
-            data.setDmgDealt(getDoubleOrNull(node, "dmg_dealt"));
-            data.setDmgTaken(getDoubleOrNull(node, "dmg_taken"));
-            data.setHealing(getDoubleOrNull(node, "healing"));
-            data.setShielding(getDoubleOrNull(node, "shielding"));
-            data.setAbilityHaste(getDoubleOrNull(node, "ability_haste"));
-            data.setManaRegen(getDoubleOrNull(node, "mana_regen"));
-            data.setEnergyRegen(getDoubleOrNull(node, "energy_regen"));
-            data.setAttackSpeed(getDoubleOrNull(node, "attack_speed"));
-            data.setMovementSpeed(getDoubleOrNull(node, "movement_speed"));
-            data.setTenacity(getDoubleOrNull(node, "tenacity"));
-
-            // 校验：如果关键字段都为空，认为该条目无效
-            if (data.getDmgDealt() == null && data.getDmgTaken() == null && data.getHealing() == null) {
-                return null;
-            }
-
-            return data;
-
-        } catch (Exception e) {
-            // 记录具体的非法 JSON 以便调试
-            log.debug("JSON 解析失败，原始 Lua 片段: {}\n生成的 JSON: {}", luaContent, finalJson);
-            // 对于个别解析失败的英雄，不要抛出异常中断整个流程，返回 null 即可
+        // 校验：至少要有数据才算有效
+        if (!data.hasData()) {
+            log.debug("数据无效: 所有字段均为空");
             return null;
         }
+
+        return data;
     }
 
     private Double getDoubleOrNull(JsonNode node, String field) {

@@ -11,9 +11,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @SpringBootApplication
 @EnableAsync
-public class RankAnalysisApplication {
+public class LeagueInsightApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(RankAnalysisApplication.class, args);
+        SpringApplication.run(LeagueInsightApplication.class, args);
     }
 }

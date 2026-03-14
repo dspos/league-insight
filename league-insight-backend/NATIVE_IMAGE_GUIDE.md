@@ -151,7 +151,7 @@ mvn clean package -Pnative
 ```bash
 # 检查主类配置是否正确
 # pom.xml 中应该配置:
-<mainClass>com.ekko.insight.RankAnalysisApplication</mainClass>
+<mainClass>com.ekko.insight.LeagueInsightApplication</mainClass>
 
 # 确认应用名称与实际的启动类一致
 ```

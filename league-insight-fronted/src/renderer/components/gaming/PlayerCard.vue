@@ -92,11 +92,13 @@
       <div class="ai-action">
         <button
           class="ai-analyze-btn"
+          :class="{ 'has-result': analysisResult }"
           :disabled="isAnalyzing"
           @click="handleAnalyzeSession"
-          title="AI 分析此玩家"
+          :title="analysisResult ? '点击查看 AI 分析结果' : 'AI 分析此玩家'"
         >
           <span v-if="isAnalyzing" class="loading-spinner small"></span>
+          <span v-else-if="analysisResult" class="ai-result-icon">📝</span>
           <span v-else>🤖</span>
         </button>
       </div>
@@ -126,6 +128,8 @@ const emit = defineEmits<{
 
 // AI 分析状态
 const isAnalyzing = ref(false)
+// AI 分析结果（存储在本地，点击后再显示）
+const analysisResult = ref<AIAnalysisResult | null>(null)
 
 // 队伍样式类
 const teamClass = computed(() => ({
@@ -214,14 +218,23 @@ function onNameClick() {
 
 // AI 分析会话数据
 async function handleAnalyzeSession() {
+  // 如果正在分析中，直接返回
   if (isAnalyzing.value) return
 
+  // 如果已有分析结果，直接显示弹窗（通过 emit）
+  if (analysisResult.value) {
+    const gameName = props.sessionSummoner.summoner?.gameName || '未知玩家'
+    emit('analyzeResult', analysisResult.value, gameName)
+    return
+  }
+
+  // 没有结果，开始后台分析
   isAnalyzing.value = true
   try {
     // 使用 player 模式分析单个玩家
     const result = await apiClient.analyzeSession('player')
-    const gameName = props.sessionSummoner.summoner?.gameName || '未知玩家'
-    emit('analyzeResult', result, gameName)
+    // 存储结果，不立即显示
+    analysisResult.value = result
   } catch (error) {
     console.error('AI 分析失败:', error)
   } finally {
@@ -355,12 +368,15 @@ function getTierCn(tier: string): string {
   align-items: center;
   gap: 14px;
   flex: 1;
+  min-height: 64px;
 }
 
 .player-left {
   display: flex;
   gap: 10px;
   flex-shrink: 0;
+  align-items: center;
+  width: 180px;
 }
 
 .avatar-wrapper {
@@ -428,6 +444,8 @@ function getTierCn(tier: string): string {
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  justify-content: center;
+  height: 48px;
 }
 
 .player-name-row {
@@ -478,7 +496,9 @@ function getTierCn(tier: string): string {
 .user-tags-row {
   display: flex;
   gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  height: 16px;
 }
 
 .user-tag {
@@ -506,6 +526,7 @@ function getTierCn(tier: string): string {
   gap: 16px;
   flex: 1;
   justify-content: center;
+  min-width: 160px;
 }
 
 /* 最近战绩结果 */
@@ -513,7 +534,9 @@ function getTierCn(tier: string): string {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
+  min-width: 36px;
 }
 
 .result-icon {
@@ -525,6 +548,7 @@ function getTierCn(tier: string): string {
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1;
 }
 
 .result-icon.win {
@@ -543,6 +567,7 @@ function getTierCn(tier: string): string {
   font-size: 9px;
   color: var(--text-tertiary);
   font-weight: 500;
+  line-height: 1;
 }
 
 /* 数据项 */
@@ -550,14 +575,19 @@ function getTierCn(tier: string): string {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
+  min-width: 50px;
 }
 
 .stat-value {
   font-size: 16px;
   font-weight: 700;
+  line-height: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 2px;
 }
 
@@ -565,6 +595,7 @@ function getTierCn(tier: string): string {
   font-size: 9px;
   color: var(--text-tertiary);
   font-weight: 500;
+  line-height: 1;
 }
 
 /* KDA 样式 */
@@ -627,6 +658,32 @@ function getTierCn(tier: string): string {
 .ai-analyze-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.ai-analyze-btn.has-result {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.15));
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #a78bfa;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.ai-analyze-btn.has-result:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(139, 92, 246, 0.3));
+  border-color: rgba(139, 92, 246, 0.7);
+  transform: scale(1.05);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+  }
+}
+
+.ai-result-icon {
+  font-size: 14px;
 }
 
 .loading-spinner.small {
