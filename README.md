@@ -6,6 +6,8 @@
 
 本项目采用 **Java + Electron** 技术栈，后端使用 Spring Boot 3.x，前端使用 Vue 3 + TypeScript。
 
+访问地址：[https://league-insight.netlify.app/](https://league-insight.netlify.app/)
+
 ***
 
 ## 功能特性
@@ -1275,3 +1277,5 @@ MIT License
 ## 作者
 
 ekko
+
+<img height="40" src="league-insight-fronted/assets/imgs/screen/WeChat.jpg" width="40" alt="微信二维码"/>
