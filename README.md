@@ -1278,4 +1278,4 @@ MIT License
 
 ekko
 
-<img height="40" src="league-insight-fronted/assets/imgs/screen/WeChat.jpg" width="40" alt="微信二维码"/>
+<img height="200" src="league-insight-fronted/assets/imgs/screen/WeChat.jpg" width="200" alt="微信二维码"/>
